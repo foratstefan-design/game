@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
 
-/* NEON RIFT: ECHOES / VESPER 3D – Edition 3
+/* NEON RIFT: ECHOES / BAUMHOLDER 3D – Edition 3
  * Engine: Three.js. Lightweight mobile-friendly material and geometry setup.
  * No overlapping coplanar road meshes, no shadow maps, no reflective asphalt.
  * Features: third-person movement, stable camera, streets, entry into buildings,
@@ -283,21 +283,32 @@ function person(color,faceColor=M.skin){
   return {root,torso,arms,legs};
 }
 const hero=person(0x3b809c);scene.add(hero.root);
-function npc(name,x,z,color,role){
+function npc(name,x,z,color,role,requires=null){
   const figure=person(color);figure.root.position.set(x,0,z);
   figure.root.rotation.y=Math.PI*.15;
   world.add(figure.root);
   const mark=new THREE.Mesh(new THREE.OctahedronGeometry(.37),new THREE.MeshBasicMaterial({color:0x8ff0d5}));
   mark.position.set(x,5,z);world.add(mark);
-  cityNPCs.push({figure,mark,name,x,z,role});
-  exteriorInteractions.push({type:'npc',name:`Mit ${name} sprechen`,x,z,role});
+  cityNPCs.push({figure,mark,name,x,z,role,requires});
+  exteriorInteractions.push({type:'npc',name:`Mit ${name} sprechen`,x,z,role,requires});
 }
-npc('Mara',-34,-11,0x9c5367,'mara');
-npc('Tarek',-33,40,0x39917f,'tarek');
-npc('Nora',18,39,0x9176af,'nora');
-npc('Leiterin Vale',87,-9,0x476e9f,'vale');
-npc('Stationswart',-82,40,0x9b824e,'station');
-npc('Jun',-84,-10,0xad7168,'jun');
+npc('Melanie',-34,-11,0x9c5367,'mara');
+npc('Nico',-33,40,0x39917f,'tarek');
+npc('Agnes',18,39,0x9176af,'nora');
+npc('Dr. Patrick',87,-9,0x476e9f,'vale');
+npc('Rudi',-82,40,0x9b824e,'station');
+npc('Alvin',-84,-10,0xad7168,'jun');
+// Stadtwerke-Auszubildender mit einer optionalen Stadtmission.
+npc('Benni',-20,-61,0x4d718c,'benni');
+// Weitere Verwandte der großen Familie: eigene Arbeit, eigene Dialoge.
+npc('Annika',-92,-11,0xb27991,'annika'); // Floristin, bei Café Luna
+npc('Tobi',17,-61,0x7488ae,'tobi'); // Paketbote, beim Park
+// Leo taucht erst nach der Hauptgeschichte auf: sein Verschwinden bleibt ein Rätsel.
+npc('Leo',-72,40,0x567d9f,'leo','report');
+// Messkasten steht außerhalb von Häusern an der Parkkante.
+block(world,1.1,2.05,.78,-26,1.025,-62,M.lamp);
+block(world,.72,.6,.10,-26,1.55,-61.56,M.skyWindow);
+exteriorInteractions.push({type:'object',name:'Messkasten prüfen',x:-26,z:-62,role:'powerBox'});
 
 // ── Room builder: a real walkable 3D interior for EVERY house ────────
 let currentBuilding=null, outsideReturn=null;
@@ -372,7 +383,7 @@ function makeRoom(building){
 const SAVE_KEY='neonrift_vesper3d';
 const startingSave={
   schema:3, x:-26,z:-9.5, inside:'apartment',metMara:false,metTarek:false,
-  metNora:false,metVale:false,metStation:false,metJun:false,
+  metNora:false,metVale:false,metStation:false,metJun:false,metStefan:false,metAnnika:false,metTobi:false,tobiEnvelope:false,metLeo:false,powerReadings:false,powerCompleted:false,
   listened:false,tape:false,frequency:false,decoded:false,report:false,
   foundPhone:false,plans:false,photo:false,ticket:false,station:false,
   sideQuest:false,answer:'',ending:false,visited:[]
@@ -498,7 +509,7 @@ function exitBuilding(){
   moveVel.set(0,0);jumpVelocity=0;grounded=true;
   yaw=.2;pitch=.2;camDistance=9.2;cameraReady=false;
   persist();updateObjective();
-  flash('Zurück auf den Straßen von Vesper.');
+  flash('Zurück auf den Straßen von Baumholder.');
 }
 
 // Validate saved outdoor coordinates so update cannot trap an old save inside walls.
@@ -514,12 +525,12 @@ else{
 function flash(text,time=3600){$('toast').textContent=text;$('toast').style.display='block';toastTimeout=performance.now()+time;}
 function updateObjective(){
   let objective;
-  if(!save.foundPhone) objective='Ein Morgen zu Hause · Sieh dir deinen Kommunikator an.';
-  else if(!save.metMara) objective='Mara wartet im Wohnviertel. Finde sie oder erkunde erst die Stadt.';
-  else if(!save.tape) objective='Die Aufnahme · Suche das Tonbandgerät im Radio Vega.';
-  else if(!save.metNora) objective='Eine Nummer fehlt · Vielleicht kennt Nora im Archiv den Code.';
+  if(!save.foundPhone) objective='Stefans Morgen · Sieh dir deinen Kommunikator an.';
+  else if(!save.metMara) objective='Melanie wartet im Wohnviertel. Finde sie oder erkunde erst die Stadt.';
+  else if(!save.tape) objective='Melanies Mann Leo · Suche das Tonbandgerät im Radio Vega.';
+  else if(!save.metNora) objective='Eine Nummer fehlt · Vielleicht kennt Agnes im Archiv den Code.';
   else if(!save.decoded) objective='91.7 · Kehre zum Radio zurück und entschlüssele das Signal.';
-  else if(!save.metVale) objective='AURORA · Sprich mit Leiterin Vale vor dem Forschungsgebäude.';
+  else if(!save.metVale) objective='AURORA · Sprich mit Dr. Patrick vor dem Forschungsgebäude.';
   else if(!save.report) objective='Eine verschlossene Akte · Suche den Bericht in AURORA.';
   else objective='Der erste Tag ist vorbei. Entdecke die Nebenhandlungen der Stadt.';
   $('goal').textContent=(currentBuilding?`${currentBuilding.label} · `:'')+objective;
@@ -557,120 +568,196 @@ function eventCard(top,heading,caption,after){
 }
 function speak(role){
   if(role==='mara'){
+    if(save.metLeo){sceneText('MELANIE','Leo ist wieder da', '„Stefan … du hast ihn wirklich gefunden?“ Melanie ringt nach Worten. „Ich weiß nicht, was am Bahnhof passiert ist. Aber heute Abend sitzen wir alle zusammen. Als Familie.“',[{label:'Wir passen aufeinander auf.'}]);return;}
     if(!save.metMara){
-      sceneText('MARA · WOHNVIERTEL','Drei Anrufe',
-        'Mara sieht sich um, bevor sie spricht. Ihre Jacke ist noch vom Regen nass.\n\n„Jan ist seit Dienstag weg. Er arbeitete beim Radiosender. Gestern kam eine Kassette ohne Absender in meinen Briefkasten. Ich konnte nur fünf Sekunden hören, dann war sie leer.“\n\nAuf die Frage nach der Polizei schüttelt sie den Kopf. „Die haben mir gesagt, Jan hätte nie bei Radio Vega gearbeitet.“',[
-        {label:'Wir suchen gemeinsam nach ihm.',run:()=>{save.metMara=true;save.answer='help';sceneText('MARA','Eine Vereinbarung','„Wenn du etwas findest, bring es zuerst zu mir. Versprich mir, dass du nicht allein nach Jan suchst.“', [{label:'Versprochen.'}])}},
-        {label:'Was, wenn Jan freiwillig weg ist?',secondary:true,run:()=>{save.metMara=true;save.answer='doubt';sceneText('MARA','Vielleicht','„Vielleicht. Aber warum hat er seine Schlüssel, sein Telefon und sogar seine Schuhe hiergelassen?“', [{label:'Ich sehe mich beim Radio um.'}])}},
+      sceneText('MELANIE · WOHNVIERTEL','Drei Anrufe',
+        'Melanie sieht sich um, bevor sie spricht. Ihre Jacke ist noch vom Regen nass.\n\n„Mein Mann Leo ist seit Dienstag weg. Er arbeitete beim Radiosender. Gestern kam eine Kassette ohne Absender in meinen Briefkasten. Ich konnte nur fünf Sekunden hören, dann war sie leer.“\n\nAuf die Frage nach der Polizei schüttelt sie den Kopf. „Die haben mir gesagt, Leo hätte nie bei Radio Vega gearbeitet.“',[
+        {label:'Wir suchen gemeinsam nach ihm.',run:()=>{save.metMara=true;save.answer='help';sceneText('MELANIE','Eine Vereinbarung','„Stefan, wir sind Familie. Wenn du etwas findest, bring es zuerst zu mir. Versprich mir, dass du nicht allein nach Leo suchst.“', [{label:'Versprochen.'}])}},
+        {label:'Was, wenn Leo freiwillig weg ist?',secondary:true,run:()=>{save.metMara=true;save.answer='doubt';sceneText('MELANIE','Vielleicht','„Vielleicht. Aber warum hat mein Mann seine Schlüssel, sein Telefon und sogar seine Schuhe hiergelassen?“', [{label:'Ich sehe mich beim Radio um.'}])}},
         {label:'Später. Ich muss erst nachdenken.',secondary:true}
       ]);
-    }else sceneText('MARA','Bitte gib nicht auf',
-      save.decoded?'„Du hast es gehört, nicht wahr? Diese Stimme … sie klingt wie Jan. Aber der Sender wurde vor zwei Tagen abgeschaltet.“':'„Wenn du zu Radio Vega gehst: Jan versteckte Dinge immer dort, wo niemand freiwillig aufräumt.“',[
+    }else sceneText('MELANIE','Bitte gib nicht auf',
+      save.decoded?'„Du hast es gehört, nicht wahr? Diese Stimme … sie klingt wie Leo. Aber der Sender wurde vor zwei Tagen abgeschaltet.“':'„Wenn du zu Radio Vega gehst: Leo versteckte Dinge immer dort, wo niemand freiwillig aufräumt.“',[
         {label:'Ich bleibe dran.'},
-        {label:'Was weißt du über AURORA?',run:()=>sceneText('MARA','Das Gebäude am Rand',
-          '„Dort bekommt jeder einen guten Lohn und niemand darf darüber reden, woran er arbeitet. Jan sagte immer, das sei der freundlichste Ort in Vesper. Er machte dabei nie ein freundliches Gesicht.“', [{label:'Danke.'}])}
+        {label:'Was weißt du über AURORA?',run:()=>sceneText('MELANIE','Das Gebäude am Rand',
+          '„Dort bekommt jeder einen guten Lohn und niemand darf darüber reden, woran er arbeitet. Leo sagte immer, das sei der freundlichste Ort in Baumholder. Er machte dabei nie ein freundliches Gesicht.“', [{label:'Danke.'}])}
       ]);
   }else if(role==='tarek'){
-    if(!save.metTarek)sceneText('TAREK · MARKTPLATZ','Die Stadt hat Ohren',
-      '„Du schaust aus, als wärst du auf der Suche“, sagt Tarek und zieht die Plane über seinen Stand. „Heute Morgen haben sie sämtliche Kameras am Bahnhof ausgetauscht. Ohne Ankündigung. Ohne Uniformen.“\n\nEr legt ein Stück Kreide vor dich. Darauf stehen drei Striche und ein Kreis.',[
-        {label:'Was bedeutet das?',run:()=>{save.metTarek=true;save.sideQuest=true;sceneText('TAREK','Ein Zeichen aus Kreide','„Früher haben die Bahnarbeiter damit geheime Lieferungen markiert. Heute habe ich es an der Tür von AURORA gesehen.“', [{label:'Ich merke es mir.'}])}},
+    if(!save.metTarek)sceneText('NICO · MARKTPLATZ','Die Stadt hat Ohren',
+      '„Du schaust aus, als wärst du auf der Suche“, sagt Nico und zieht die Plane über seinen Stand. „Heute Morgen haben sie sämtliche Kameras am Bahnhof ausgetauscht. Ohne Ankündigung. Ohne Uniformen.“\n\nEr legt ein Stück Kreide vor dich. Darauf stehen drei Striche und ein Kreis.',[
+        {label:'Was bedeutet das?',run:()=>{save.metTarek=true;save.sideQuest=true;sceneText('NICO','Ein Zeichen aus Kreide','„Früher haben die Bahnarbeiter damit geheime Lieferungen markiert. Heute habe ich es an der Tür von AURORA gesehen.“', [{label:'Ich merke es mir.'}])}},
         {label:'Du übertreibst.',secondary:true,run:()=>{save.metTarek=true;save.sideQuest=true}}
       ]);
-    else sceneText('TAREK','Ein leiser Hinweis',
+    else sceneText('NICO','Ein leiser Hinweis',
       '„Die besten Geheimnisse sind die, die sich als etwas Alltägliches tarnen.“ Er zeigt zum Bahnhof. „Frag nach dem Zug, den es offiziell gar nicht gibt.“', [{label:'Ich werde nachfragen.'}]);
   }else if(role==='nora'){
-    if(!save.metNora)sceneText('NORA · ARCHIV','Eine fehlende Seite',
-      'Nora führt dich zum Fenster und legt eine Karte der alten Stadt aus. „Ich habe Jan geholfen, die Senderprotokolle zu archivieren. Dann löschte jemand sein ganzes Personalregister.“\n\nSie faltet die Karte und zeigt auf eine handschriftliche Notiz: 2 – 7 – 1.',[
-        {label:'Warum diese drei Zahlen?',run:()=>{save.metNora=true;sceneText('NORA','Das Passwort',
-          '„Jan sagte, falls wir jemals getrennt würden, sei das die Reihenfolge. Ich hielt es für einen Witz. Jetzt fürchte ich, es war ein Abschied.“', [{label:'Ich probiere es aus.'}])}},
+    if(!save.metNora)sceneText('AGNES · ARCHIV','Eine fehlende Seite',
+      'Agnes legt ihre Jacke über einen Stuhl. „Rudi hat heute Früh am Bahnhof wieder etwas Seltsames gesehen. Seit wir verheiratet sind, kann ich an seiner Stimme hören, wann er sich Sorgen macht.“
+
+Dann führt sie dich zum Fenster und legt eine Karte der alten Stadt aus. „Ich habe Leo geholfen, die Senderprotokolle zu archivieren. Dann löschte jemand sein ganzes Personalregister.“\n\nSie faltet die Karte und zeigt auf eine handschriftliche Notiz: 2 – 7 – 1.',[
+        {label:'Warum diese drei Zahlen?',run:()=>{save.metNora=true;sceneText('AGNES','Das Passwort',
+          '„Leo sagte, falls wir jemals getrennt würden, sei das die Reihenfolge. Ich hielt es für einen Witz. Jetzt fürchte ich, es war ein Abschied.“', [{label:'Ich probiere es aus.'}])}},
         {label:'Darf ich die Zahlen behalten?',run:()=>{save.metNora=true;flash('Notiert: 2 – 7 – 1')}}
       ]);
-    else sceneText('NORA','Verdeckte Baupläne',
-      '„Vesper ist älter, als die Stadtverwaltung behauptet. Unter den Neubauten liegen Tunnel von einem früheren Versorgungsnetz. Der Eingang könnte beim Bahnhof sein.“',[
-        {label:'Kann ich die Pläne ansehen?',run:()=>sceneText('NORA','Nicht hier draußen',
+    else sceneText('AGNES','Verdeckte Baupläne',
+      '„Baumholder ist älter, als die Stadtverwaltung behauptet. Unter den Neubauten liegen Tunnel von einem früheren Versorgungsnetz. Der Eingang könnte beim Bahnhof sein.“',[
+        {label:'Kann ich die Pläne ansehen?',run:()=>sceneText('AGNES','Nicht hier draußen',
           '„Geh in das Archivgebäude. Im hinteren Raum steht ein alter Kartentisch. Vielleicht hat ihn noch niemand entfernt.“', [{label:'Ich sehe nach.'}])},
         {label:'Danke.'}
       ]);
   }else if(role==='vale'){
     if(!save.decoded){
-      sceneText('LEITERIN VALE · AURORA','Ein Termin, den es nicht gibt',
-        '„Sie sind nicht angemeldet“, sagt die Frau vor dem Tor. Ihr Blick bleibt einen Moment zu lange an deinem Gesicht hängen. „Und trotzdem … habe ich Sie erwartet.“',[
-          {label:'Was meinen Sie damit?',run:()=>sceneText('LEITERIN VALE','Eine kurze Pause',
+      sceneText('DR. PATRICK · AURORA','Ein Termin, den es nicht gibt',
+        '„Sie sind nicht angemeldet“, sagt der Mann vor dem Tor. Sein Blick bleibt einen Moment zu lange an deinem Gesicht hängen. „Und trotzdem … habe ich Sie erwartet.“',[
+          {label:'Was meinen Sie damit?',run:()=>sceneText('DR. PATRICK','Eine kurze Pause',
             '„Ich meine, dass Sie besser wieder gehen sollten. Für Ihre eigene Ruhe.“', [{label:'Gut.'}])},
           {label:'Dann komme ich später wieder.',secondary:true}
         ]);
     }else if(!save.metVale){
-      sceneText('LEITERIN VALE · AURORA','Die Stimme auf dem Band',
-        '„Sagen Sie den Satz nicht noch einmal.“ Vale sieht plötzlich erschöpft aus. „Wir haben diese Aufnahme nie gesendet. Und wir haben alle Kopien verbrannt.“\n\nSie greift in ihre Manteltasche und drückt dir einen weißen Ausweis in die Hand. Ohne Foto. Ohne Namen.',[
-          {label:'Warum helfen Sie mir?',run:()=>{save.metVale=true;sceneText('LEITERIN VALE','Vor dem Sturm',
+      sceneText('DR. PATRICK · AURORA','Die Stimme auf dem Band',
+        '„Sagen Sie den Satz nicht noch einmal.“ Patrick sieht plötzlich erschöpft aus. „Wir haben diese Aufnahme nie gesendet. Und wir haben alle Kopien verbrannt.“\n\nEr greift in seine Manteltasche und drückt dir einen weißen Ausweis in die Hand. Ohne Foto. Ohne Namen.',[
+          {label:'Warum helfen Sie mir?',run:()=>{save.metVale=true;sceneText('DR. PATRICK','Vor dem Sturm',
             '„Weil ich vor Jahren jemandem versprochen habe, beim zweiten Mal nicht wegzusehen. Der Ausweis öffnet das Archiv im Erdgeschoss. Lesen Sie nur die erste Seite.“', [{label:'Ich werde vorsichtig sein.'}])}},
-          {label:'Ich will wissen, was Sie verbergen.',run:()=>{save.metVale=true;save.answer='confront';sceneText('LEITERIN VALE','Ein Fehler',
-            '„Dann sollten Sie sehr schnell lernen, wann man keine Fragen stellt.“ Ihre Hand zittert, als sie dir den Ausweis gibt.', [{label:'Ich gehe hinein.'}])}}
+          {label:'Ich will wissen, was Sie verbergen.',run:()=>{save.metVale=true;save.answer='confront';sceneText('DR. PATRICK','Ein Fehler',
+            '„Dann sollten Sie sehr schnell lernen, wann man keine Fragen stellt.“ Seine Hand zittert, als er dir den Ausweis gibt.', [{label:'Ich gehe hinein.'}])}}
         ]);
-    }else sceneText('LEITERIN VALE','Ein letzter Rat','„Wenn Sie im Gebäude etwas finden, das Ihren Namen trägt – lesen Sie zuerst das Datum.“', [{label:'Verstanden.'}]);
+    }else sceneText('DR. PATRICK','Ein letzter Rat','„Wenn Sie im Gebäude etwas finden, das Ihren Namen trägt – lesen Sie zuerst das Datum.“', [{label:'Verstanden.'}]);
   }else if(role==='station'){
-    sceneText('STATIONSWART','Der Zug um 03:17',
-      '„Laut Fahrplan fahren nachts keine Züge. Aber ich muss die Weichen jeden Morgen neu stellen. Einer fährt also doch.“\n\nEr tippt auf seine Uhr. „Immer zur gleichen Minute. Und manchmal höre ich Musik aus den leeren Waggons.“',[
+    sceneText('RUDI · BAHNHOF','Der Zug um 03:17',
+      '„Agnes hat gesagt, ich soll nicht so viel arbeiten“, murmelt Rudi. „Leicht gesagt. Laut Fahrplan fahren nachts keine Züge. Aber ich muss die Weichen jeden Morgen neu stellen. Einer fährt also doch.“\n\nEr tippt auf seine Uhr. „Immer zur gleichen Minute. Und manchmal höre ich Musik aus den leeren Waggons.“',[
         {label:'Wann genau?',run:()=>{save.metStation=true;save.station=true;flash('Hinweis: 03:17 Uhr')}},
-        {label:'Haben Sie einen Fahrplan?',run:()=>{save.metStation=true;sceneText('STATIONSWART','Ein altes Stück Papier',
+        {label:'Haben Sie einen Fahrplan?',run:()=>{save.metStation=true;sceneText('RUDI · BAHNHOF','Ein altes Stück Papier',
           '„Die letzten echten Fahrpläne sind im Bahnhof. Ich habe nichts mehr damit zu tun.“', [{label:'Ich schaue nach.'}])}}
       ]);
+  }else if(role==='benni'){
+    if (!save.metStefan){
+      sceneText('BENNI · STADTWERKE','Ein ungewöhnlicher Ausschlag',
+        'Benni sitzt auf einer Bank am Park und faltet einen zerknitterten Messbericht. „Du kennst dich doch mit Technik aus? Seit zwei Tagen meldet ein Messkasten Stromspitzen, obwohl hier gar keine Leitung für so große Lasten verläuft.“\n\nEr blickt zu den Häusern. „Die Leute beschweren sich über flackernde Lampen. Ich möchte nur herausfinden, warum.“',[
+          {label:'Ich sehe mir den Messkasten an.',run:()=>{save.metStefan=true;flash('Nebenauftrag: Messkasten am Park untersuchen.')}},
+          {label:'Vielleicht später.',secondary:true}
+        ]);
+    } else if(save.powerReadings&&!save.powerCompleted){
+      sceneText('BENNI','Daten, die nicht hierhergehören',
+        'Benni liest die Werte zweimal. „Da ist ein Impuls, der jede Nacht zur selben Minute auftaucht. Aber der Verbrauch hat kein Ziel. Das ist, als würde eine ganze Straße Strom ziehen, ohne dass irgendwo ein Licht angeht.“\n\nEr steckt den Bericht ein. „Ich frage morgen in der Stadtverwaltung nach. Danke für deine Hilfe.“',[
+          {label:'Sag mir, wenn du etwas findest.',run:()=>{save.powerCompleted=true;flash('Nebenauftrag abgeschlossen · Benni forscht weiter.')}}
+        ]);
+    } else if(save.powerCompleted){
+      sceneText('BENNI','Keine Antwort von der Stadt',
+        '„Die Verwaltung behauptet, unsere Geräte seien defekt. Seltsam nur, dass sie heute sämtliche Messprotokolle abgeholt hat.“ Benni lässt seinen Blick über die Straße wandern. „Ich behalte die Sache im Auge.“',[
+          {label:'Bleib vorsichtig.'}
+        ]);
+    } else {
+      sceneText('BENNI','Der graue Kasten',
+        '„Direkt neben dem Park. Grauer Stromkasten, blauer Aufkleber. Schreib dir die Messwerte auf, bevor jemand die Sicherung herausnimmt.“',[
+          {label:'Ich sehe nach.'}
+        ]);
+    }
+  }else if(role==='annika'){
+    if(!save.metAnnika){
+      sceneText('ANNIKA · BLUMENLADEN','Ein Strauß, der noch nicht fertig ist',
+        'Annika sortiert Blumen auf einer Kiste neben dem Café. „Alvin hat heute zum dritten Mal gefragt, welche Farbe ich am liebsten mag. Meinst du, er plant etwas?“ Sie lacht. „Dabei wünsche ich mir eigentlich nur einen freien Nachmittag mit der Familie.“\n\nSie hebt einen Umschlag auf. „Tobi hat ihn vorhin hier vergessen. Ohne Absender, nur mit einer Nummer: 03:17.“',[
+          {label:'Frag Alvin doch direkt.',run:()=>{save.metAnnika=true;save.annikaAdvice='honest';sceneText('ANNIKA','Ein guter Rat','„Vielleicht mache ich das. Aber erst muss ich diesen Umschlag zurückgeben. Frag Tobi beim Park, ob er ihn vermisst.“',[{label:'Ich suche Tobi.'}])}},
+          {label:'Ich kann Tobi Bescheid sagen.',run:()=>{save.metAnnika=true;save.annikaAdvice='help';flash('Nebenhandlung: Umschlag für Tobi · Suche ihn beim Park.')}}
+        ]);
+    }else sceneText('ANNIKA','Blumen und Geheimnisse',
+      '„Noch ist zwischen Alvin und mir nichts offiziell. Vielleicht ändert sich das bald.“ Sie blickt zu einem vorbeifahrenden Lieferwagen. „Und vergiss Tobi nicht. Der Umschlag macht ihm offenbar Sorgen.“',[
+        {label:'Ich rede mit Tobi.'}
+      ]);
+  }else if(role==='tobi'){
+    if(!save.metAnnika){
+      sceneText('TOBI · PAKETDIENST','Eine verlorene Sendung',
+        '„Stefan! Hast du Annika gesehen? Ich habe vor dem Café einen Brief liegen gelassen. Die Adresse war merkwürdig: Gleis 0. Ich weiß nicht einmal, ob es das hier gibt.“',[
+          {label:'Ich suche Annika.',run:()=>{save.metTobi=true;flash('Tobi wartet auf Nachricht von Annika.')}},
+          {label:'Nicht gesehen.',secondary:true,run:()=>{save.metTobi=true}}
+        ]);
+    }else if(!save.tobiEnvelope){
+      sceneText('TOBI','Der Brief ohne Absender',
+        '„Bei Annika? Zum Glück!“ Tobi rückt seine Tasche zurecht. „Ich habe einen Auftrag, den ich gar nicht angenommen habe. Jeden Morgen steht ein Brief im System, immer mit derselben Uhrzeit.“\n\nEr hält dir ein zerknittertes Formular hin: 03:17 — Empfänger: NICHT VERZEICHNET.',[
+          {label:'Formular fotografieren',run:()=>{save.metTobi=true;save.tobiEnvelope=true;flash('Nebenauftrag abgeschlossen · Hinweis 03:17 im Journal.')}},
+          {label:'Behalte es lieber.',secondary:true,run:()=>{save.metTobi=true}}
+        ]);
+    }else sceneText('TOBI','Keine weiteren Pakete',
+      '„Seit heute Mittag zeigt mein Scanner keine neuen Zustellungen an. Aber ich höre nachts immer noch diesen Zug.“',[{label:'Pass auf dich auf.'}]);
+  }else if(role==='leo'){
+    sceneText('LEO · BAHNHOF','Du bist doch verschwunden!',
+      'Leo steht auf dem Bahnsteig, als wäre nichts passiert. Seine Jacke trägt das Logo von Radio Vega. „Stefan?“, fragt er leise. „Sag Melanie bitte, dass ich wieder da bin.“\n\nEr schaut an dir vorbei, zur unterirdischen Treppe. „Ich weiß nicht, welchen Tag wir haben. Für mich waren es nur ein paar Minuten.“',[
+        {label:'Melanie wartet auf dich.',run:()=>{save.metLeo=true;flash('Leo ist zurück · Sprich mit Melanie.')}},
+        {label:'Was ist unter dem Bahnhof?',run:()=>{save.metLeo=true;sceneText('LEO','Kein Licht am Ende','„Da unten haben die Uhren aufgehört zu laufen. Mehr weiß ich nicht. Vielleicht ist es besser so.“',[{label:'Ich werde nachforschen.'}])}}
+      ]);
   }else if(role==='jun'){
-    sceneText('JUN · CAFÉ LUNA','Ein seltsamer Gast',
-      '„Jan? Klar kenne ich ihn. Er trank jeden Donnerstag Tee, obwohl er Tee hasste. Letzte Woche hat er plötzlich das Glas abgestellt und gesagt: ,Ich glaube, wir sind schon einmal hier gewesen.‘“',[
-        {label:'Hat er noch etwas gesagt?',run:()=>{save.metJun=true;sceneText('JUN','Eine Erinnerung','„Er hat nach einer alten Fotografie gefragt. Angeblich hing sie mal an der Wand der Markthalle. Ich habe ihm gesagt, dass das Gebäude erst zwölf Jahre alt ist.“',[{label:'Seltsam.'}])}},
+    sceneText('ALVIN · CAFÉ LUNA','Ein seltsamer Gast',
+      '„Annika hilft heute bei der Floristin aus. Ich wollte sie eigentlich fragen, ob wir unser Leben gemeinsam planen wollen“, sagt Alvin und lächelt verlegen. „Den richtigen Moment für die Verlobung suche ich noch.“
+
+„Leo? Klar kenne ich ihn. Er trank jeden Donnerstag Tee, obwohl er Tee hasste. Letzte Woche hat er plötzlich das Glas abgestellt und gesagt: ,Ich glaube, wir sind schon einmal hier gewesen.‘“',[
+        {label:'Hat er noch etwas gesagt?',run:()=>{save.metJun=true;sceneText('ALVIN','Eine Erinnerung','„Er hat nach einer alten Fotografie gefragt. Angeblich hing sie mal an der Wand der Markthalle. Ich habe ihm gesagt, dass das Gebäude erst zwölf Jahre alt ist.“',[{label:'Seltsam.'}])}},
         {label:'Danke.',run:()=>{save.metJun=true}}
       ]);
   }
 }
 function inspect(role){
   switch(role){
+    case 'powerBox':
+      if(!save.metStefan)sceneText('MESSKASTEN AM PARK','Ein kleiner Defekt?',
+        'Ein Zähler klickt im regelmäßigen Takt. An der Seite steht „Stadtwerke BAUMHOLDER“. Das Typenschild ist warm, obwohl der Kasten im Schatten steht.',[
+          {label:'Erst jemanden von den Stadtwerken fragen.'}
+        ]);
+      else if(!save.powerReadings)sceneText('MESSKASTEN AM PARK','Messwerte',
+        'Du liest die Daten von Bennis Messgerät ab. Zwischen den normalen Schwankungen steht eine einzige unerklärliche Spitze – jeden Tag um 03:17 Uhr. Eine Kennung taucht wiederholt auf: ECHO / V-0.',[
+          {label:'Messung für Benni notieren',run:()=>{save.powerReadings=true;flash('Messdaten gesichert · Sprich wieder mit Benni.')}},
+          {label:'Abbrechen',secondary:true}
+        ]);
+      else sceneText('MESSKASTEN AM PARK','Notiert',
+        'Die Daten sind gesichert. Der Zähler tickt jetzt wieder ganz normal.',[
+          {label:'Weiter.'}
+        ]);
+      break;
+
     case 'homePhone':
       sceneText('DEINE WOHNUNG','Drei verpasste Anrufe',
-        '07:14 Uhr. Auf dem Display erscheint eine Nachricht von Mara: „Bitte komm allein. Ich glaube, Jan steckt in Schwierigkeiten.“\n\nDaneben: eine alte Erinnerung an einen gemeinsamen Ausflug. Vier Personen vor einem riesigen Bahnhof. Du erkennst Mara, Jan – und dich. Die vierte Person wurde aus dem Foto gekratzt.',[
-          {label:'Nachricht beantworten',run:()=>{save.foundPhone=true;flash('Hauptgeschichte begonnen · Finde Mara im Wohnviertel')}},
+        '07:14 Uhr. Auf dem Display erscheint eine Nachricht von Melanie: „Bitte komm allein. Ich glaube, Leo steckt in Schwierigkeiten.“\n\nDaneben: eine alte Erinnerung an einen gemeinsamen Ausflug. Vier Personen vor einem riesigen Bahnhof. Du erkennst Melanie, Leo – und dich selbst, Stefan. Die vierte Person wurde aus dem Foto gekratzt.',[
+          {label:'Nachricht beantworten',run:()=>{save.foundPhone=true;flash('Hauptgeschichte begonnen · Finde Melanie im Wohnviertel')}},
           {label:'Foto genauer ansehen',run:()=>{save.foundPhone=true;save.photo=true;sceneText('DEINE WOHNUNG','Die vierte Person',
             'Jemand hat das Gesicht so gründlich entfernt, dass sogar das Papier eingerissen ist. Auf der Rückseite steht in deiner eigenen Handschrift: „Erinner mich daran, wenn wir uns wiedersehen.“', [{label:'Einstecken.'}])}}
         ]);break;
     case 'tape':
       if(!save.metMara){
-        sceneText('RADIO VEGA','Ein leerer Arbeitsplatz','Auf einem Schreibtisch steht ein altes Tonbandgerät. Der rechte Lautsprecher ist ausgebaut. Auf dem Tisch klebt ein Etikett: JAN.',[{label:'Ich schaue mich später noch einmal um.'}]);
+        sceneText('RADIO VEGA','Ein leerer Arbeitsplatz','Auf einem Schreibtisch steht ein altes Tonbandgerät. Der rechte Lautsprecher ist ausgebaut. Auf dem Tisch klebt ein Etikett: LEO.',[{label:'Ich schaue mich später noch einmal um.'}]);
       }else{
         sceneText('RADIO VEGA','Sechs Sekunden',
-          'Du drückst die Wiedergabetaste. Erst rauscht es. Dann hörst du ein Klopfen, drei Atemzüge und Jans Stimme: „Nora hat die Zahlen. Sucht nicht nach mir. Sucht nach dem, was ich gehört habe.“\n\nDas Band stoppt. Obwohl du nichts angefasst hast, beginnt es rückwärts zu laufen.',[
-            {label:'Aufnahme sichern',run:()=>{save.tape=true;flash('Die Aufnahme ist gesichert. Wer ist Nora?')}},
+          'Du drückst die Wiedergabetaste. Erst rauscht es. Dann hörst du ein Klopfen, drei Atemzüge und Leos Stimme: „Agnes hat die Zahlen. Sucht nicht nach mir. Sucht nach dem, was ich gehört habe.“\n\nDas Band stoppt. Obwohl du nichts angefasst hast, beginnt es rückwärts zu laufen.',[
+            {label:'Aufnahme sichern',run:()=>{save.tape=true;flash('Die Aufnahme ist gesichert. Wer ist Agnes?')}},
             {label:'Noch einmal hören',run:()=>{save.tape=true;sceneText('RADIO VEGA','Das zweite Geräusch',
               'Zwischen zwei Knacksern hörst du leise Schritte. Es klingt, als würde jemand durch einen langen Gang laufen. Dann eine Tür. Dann absolute Stille.', [{label:'Ich brauche Hilfe bei der Entschlüsselung.'}])}}
           ]);
       }break;
     case 'frequency':
       if(!save.tape)sceneText('RADIO VEGA','Verschlüsseltes Empfangspult','Auf dem Display flackert nur eine Zahl: 91.7. Das Gerät ist gesperrt.',[{label:'Später noch einmal.'}]);
-      else if(!save.metNora)sceneText('RADIO VEGA','Drei Stellen fehlen','Das Gerät verlangt einen dreistelligen Code. Ein Klebezettel verweist auf „N. / altes Archiv“. Vielleicht gibt es dort eine Antwort.',[{label:'N. könnte Nora sein.'}]);
+      else if(!save.metNora)sceneText('RADIO VEGA','Drei Stellen fehlen','Das Gerät verlangt einen dreistelligen Code. Ein Klebezettel verweist auf „A. / altes Archiv“. Vielleicht gibt es dort eine Antwort.',[{label:'A. könnte Agnes sein.'}]);
       else if(!save.decoded)sceneText('RADIO VEGA','Entschlüsseln',
-        'Das Display fragt nach einer dreistelligen Folge. Du erinnerst dich an Noras Notiz.',[
+        'Das Display fragt nach einer dreistelligen Folge. Du erinnerst dich an Agnes' Notiz.',[
           {label:'2 – 7 – 1',run:()=>{save.decoded=true;save.frequency=true;eventCard('RADIO VEGA','SIGNAL GEFUNDEN','Ein einzelner Ton durchbricht das Rauschen.',()=>sceneText('RADIO VEGA','Die Stimme',
-            '„Hier ist Station Null. Falls ihr mich hört: Sagt Vale, dass die Türen längst offen sind.“\n\nDu blickst zum Fenster. Für einen Augenblick flackern sämtliche Straßenlampen gleichzeitig.',[{label:'Vale finden.'}]))}},
+            '„Hier ist Station Null. Falls ihr mich hört: Sagt Patrick, dass die Türen längst offen sind.“\n\nDu blickst zum Fenster. Für einen Augenblick flackern sämtliche Straßenlampen gleichzeitig.',[{label:'Patrick finden.'}]))}},
           {label:'2 – 1 – 7',run:()=>{flash('ZUGRIFF VERWEIGERT · Die Reihenfolge stimmt nicht.')}},
           {label:'7 – 2 – 1',run:()=>{flash('ZUGRIFF VERWEIGERT · Noch einmal versuchen.')}}
         ]);
-      else sceneText('RADIO VEGA','Station Null','Die letzte Meldung bleibt im Speicher: „Sagt Vale, dass die Türen längst offen sind.“', [{label:'Zurück.'}]);
+      else sceneText('RADIO VEGA','Station Null','Die letzte Meldung bleibt im Speicher: „Sagt Patrick, dass die Türen längst offen sind.“', [{label:'Zurück.'}]);
       break;
     case 'plans':
       sceneText('ARCHIV','Pläne unter der Stadt',
         'Der Kartentisch zeigt mehrere Versionen desselben Straßennetzes. Auf dem ältesten Plan gibt es unter AURORA einen Bahnhof. Auf dem neuesten ist dort nur noch eine weiße Fläche.',[
           {label:'Pläne abzeichnen',run:()=>{save.plans=true;flash('Archivpläne im Journal notiert.')}},
           {label:'Wer hat das geändert?',run:()=>{save.plans=true;sceneText('ARCHIV','Ein roter Stempel',
-            'Auf der Rückseite steht: „Freigabe ausschließlich durch V. / Ebene 0“. Mehr findest du nicht.', [{label:'Merken.'}])}}
+            'Auf der Rückseite steht: „Freigabe ausschließlich durch P. / Ebene 0“. Mehr findest du nicht.', [{label:'Merken.'}])}}
         ]);break;
     case 'report':
       if(!save.metVale)sceneText('AURORA','Zutritt verweigert','Die Konsole verlangt einen Sonderausweis. Die Akte ist versiegelt.',[{label:'Schließen.'}]);
       else if(!save.report)sceneText('AURORA','Ein Bericht ohne Namen',
-        'Du legst den weißen Ausweis auf den Scanner. Eine Datei öffnet sich: PROJEKT ECHO — VORVERSUCH 01.\n\nDie erste Seite enthält nur einen Lageplan, einen Termin für morgen früh und einen Satz: „Wenn die Erinnerung beginnt, ist die erste Phase bereits abgeschlossen.“\n\nDu hast keine Ahnung, was das bedeuten soll. Dein Kommunikator klingelt. Es ist Mara.',[
-          {label:'Mara zurückrufen',run:()=>{save.report=true;eventCard('KAPITEL 6 · ENDE DES ERSTEN TAGES','20:46 UHR','Und irgendwo unter Vesper fährt ein Zug ab.',()=>sceneText('MARA · ANRUF','Nicht nach Hause gehen',
-            '„Jemand war in deiner Wohnung. Sie haben nichts mitgenommen. Nur das alte Foto ist weg.“\n\nBevor du antworten kannst, hörst du eine fremde Stimme. „Mara? Mit wem sprichst du?“ Die Verbindung bricht ab.',[{label:'Fortsetzung folgt …',run:()=>flash('Kapitel 6 abgeschlossen · Die Stadt bleibt weiter erkundbar.')}]))}},
+        'Du legst den weißen Ausweis auf den Scanner. Eine Datei öffnet sich: PROJEKT ECHO — VORVERSUCH 01.\n\nDie erste Seite enthält nur einen Lageplan, einen Termin für morgen früh und den Vermerk „Sprachsystem: ChatGPT / Testmodus“ sowie einen Satz: „Wenn die Erinnerung beginnt, ist die erste Phase bereits abgeschlossen.“\n\nDu hast keine Ahnung, was das bedeuten soll. Dein Kommunikator klingelt. Es ist Melanie.',[
+          {label:'Melanie zurückrufen',run:()=>{save.report=true;eventCard('KAPITEL 6 · ENDE DES ERSTEN TAGES','20:46 UHR','Und irgendwo unter Baumholder fährt ein Zug ab.',()=>sceneText('MELANIE · ANRUF','Nicht nach Hause gehen',
+            '„Jemand war in deiner Wohnung. Sie haben nichts mitgenommen. Nur das alte Foto ist weg.“\n\nBevor du antworten kannst, hörst du eine fremde Stimme. „Melanie? Mit wem sprichst du?“ Die Verbindung bricht ab.',[{label:'Fortsetzung folgt …',run:()=>flash('Kapitel 6 abgeschlossen · Die Stadt bleibt weiter erkundbar.')}]))}},
           {label:'Erste Seite fotografieren',run:()=>{save.report=true;eventCard('KAPITEL 6 · ENDE DES ERSTEN TAGES','20:46 UHR','Das Telefon klingelt. Niemand geht ran.',()=>flash('Kapitel 6 abgeschlossen · Alle Nebenhandlungen bleiben offen.'))}}
         ]);
-      else sceneText('AURORA','Projekt Echo','Du hast den Lageplan bereits kopiert. Du kommst immer wieder auf die gleiche Frage zurück: Warum hatte Vale damit gerechnet, dass du ihn lesen wirst?', [{label:'Zurück.'}]);
+      else sceneText('AURORA','Projekt Echo','Du hast den Lageplan bereits kopiert. Du kommst immer wieder auf die gleiche Frage zurück: Warum hatte Patrick damit gerechnet, dass du ihn lesen wirst?', [{label:'Zurück.'}]);
       break;
     case 'timetable':
       sceneText('BAHNHOF','Unvollständiger Fahrplan',
@@ -679,7 +766,7 @@ function inspect(role){
           {label:'Zurücklegen.'}
         ]);break;
     case 'wallNote':
-      sceneText('VESPER · FUNDSACHE','Das Foto aus der Markthalle',
+      sceneText('BAUMHOLDER · FUNDSACHE','Das Foto aus der Markthalle',
         'An der Wand hängt ein verwittertes Bild der Stadt. Jemand hat eine Ecke mit Tinte geschwärzt. Daneben steht: „Unsere Stadt war nicht immer hier.“',[
           {label:'Notiz fotografieren',run:()=>{save.photo=true;flash('Neue Fundsache im Journal.')}},
           {label:'Weitergehen.'}
@@ -700,6 +787,7 @@ function scanInteractions(){
   const options=currentBuilding?interiorInteractions:exteriorInteractions;
   let best=null,dist=currentBuilding?3.0:3.25;
   for(const candidate of options){
+    if(candidate.requires&&!save[candidate.requires])continue;
     const d=Math.hypot(candidate.x-playerPos.x,candidate.z-playerPos.z);
     if(d<dist){best=candidate;dist=d;}
   }
@@ -711,11 +799,14 @@ function scanInteractions(){
 // ── Journal ───────────────────────────────────────────────────────────
 function journal(){
   const quests=[
+    ['Familie in Baumholder','Stefan (du), Agnes & Rudi (verheiratet), Melanie & Leo (verheiratet), Alvin & Annika (noch nicht verlobt), Benni, Tobi, Nico und Patrick. Jeder hat seinen eigenen Alltag.'],
     ['Hauptgeschichte',save.report?'Kapitel 6 abgeschlossen. Die Stadt bleibt zugänglich.':$('goal').textContent],
-    ['Jan ist verschwunden',save.metMara?'Mara hat dir von Jan erzählt.':'Mara wollte dringend mit dir sprechen.'],
+    ['Melanies Mann Leo ist verschwunden',save.metMara?'Melanie sucht ihren Mann Leo.':'Melanie will dringend mit dir sprechen.'],
     ['Die Frequenz 91.7',save.decoded?'Die Meldung von Station Null wurde entschlüsselt.':save.tape?'Tonband gefunden. Ein dreistelliger Code fehlt.':'Suche nach Hinweisen bei Radio Vega.'],
-    ['Die verschwundenen Gleise',save.plans?'Unter AURORA gab es einst einen Bahnhof.':save.metNora?'Nora erwähnt verdeckte Baupläne.':'Im Archiv könntest du alte Pläne finden.'],
-    ['Der Zug um 03:17',save.ticket?'Ein ungewöhnliches Ticket wurde gefunden.':save.station?'Ein Zug fährt jede Nacht, obwohl er nicht auf dem Plan steht.':'Sprich mit dem Stationswart und betritt den Bahnhof.'],
+    ['Die verschwundenen Gleise',save.plans?'Unter AURORA gab es einst einen Bahnhof.':save.metNora?'Agnes erwähnt verdeckte Baupläne.':'Im Archiv könntest du alte Pläne finden.'],
+    ['Der Zug um 03:17',save.ticket?'Ein ungewöhnliches Ticket wurde gefunden.':save.station?'Ein Zug fährt jede Nacht, obwohl er nicht auf dem Plan steht.':'Sprich mit Rudi am Bahnhof.'],
+    ['Störungen im Stromnetz',save.powerCompleted?'Benni hat die Messdaten. Die Stadtverwaltung schweigt.':save.powerReadings?'Du hast die seltsamen Messdaten. Sprich mit Benni.':save.metStefan?'Benni bittet dich, den Kasten am Park zu überprüfen.':'Beim Park untersucht Benni ungewöhnliche Stromspitzen.'],
+    ['Tobis rätselhafter Umschlag',save.tobiEnvelope?'03:17 und Gleis 0 stehen auf einem Formular.':save.metAnnika?'Annika erwähnt einen Umschlag. Suche Tobi beim Park.':'Sprich mit Annika und Tobi.'],
     ['Ein Foto ohne Datum',save.photo?'Du hast ein beschädigtes Foto gefunden.':'Ein merkwürdiges Foto soll in der Markthalle hängen.']
   ];
   const list=$('journalBody');list.replaceChildren();
@@ -728,7 +819,7 @@ function journal(){
 }
 $('menuBtn').onclick=()=>{if(!started||dialogOpen)return;menuOpen=true;$('menu').hidden=false;journal()};
 $('closeMenu').onclick=()=>{menuOpen=false;$('menu').hidden=true};
-$('resetSave').onclick=()=>{if(confirm('Nur den VESPER-3D-Spielstand wirklich löschen und von vorne anfangen?')){localStorage.removeItem(SAVE_KEY);location.reload()}};
+$('resetSave').onclick=()=>{if(confirm('Nur den BAUMHOLDER-3D-Spielstand wirklich löschen und von vorne anfangen?')){localStorage.removeItem(SAVE_KEY);location.reload()}};
 $('qualityBtn').onclick=()=>{
   quality=quality==='auto'?'low':quality==='low'?'high':'auto';
   $('qualityBtn').textContent='Grafik: '+({auto:'Auto',low:'Schnell',high:'Hoch'})[quality];
@@ -739,7 +830,7 @@ $('start').onclick=()=>{
   started=true;$('intro').hidden=true;
   hero.root.position.copy(playerPos);
   updateObjective();
-  flash(currentBuilding?'Sieh dir die Dinge in deiner Wohnung an.':'Vesper erwacht. Dein erster Tag beginnt.');
+  flash(currentBuilding?'Stefan, sieh dir die Dinge in deiner Wohnung an.':'Baumholder erwacht. Dein erster Tag beginnt.');
 };
 $('act').onclick=interact;
 
@@ -841,7 +932,11 @@ function frame(t){
   if(currentBuilding){
     for(const o of interiorInteractions){if(o.marker)o.marker.rotation.y+=elapsed*1.2;}
   }else{
-    for(const n of cityNPCs)n.mark.rotation.y+=elapsed*.55;
+    for(const n of cityNPCs){
+      const shown=!n.requires||Boolean(save[n.requires]);
+      n.figure.root.visible=shown; n.mark.visible=shown;
+      if(shown)n.mark.rotation.y+=elapsed*.55;
+    }
   }
   if(t>toastTimeout)$('toast').style.display='none';
   mapClock+=elapsed;
