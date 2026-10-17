@@ -174,7 +174,7 @@ function console3(){show('SICHERHEITSKONSOLE · AURORA',[
 ],[['Verstanden',()=>{flags.terminal=true;persist();hide()}]])}
 function card3(){if(flags.card){show('MATERIALLAGER',['Die Kiste ist leer. Den Ausweis trägst du bereits bei dir.'],[['Zurück',hide]]);return}show('MATERIALLAGER',[ 'Zwischen alten Schaltplänen liegt ein Sicherheitsausweis.',
 'Name: DR. E. VALE · Stufe: 04. Das Foto wurde entfernt.',
-'Jemand hat auf die Rückseite geschrieben: „IRIS weiß es. Aber sie darf es nicht erinnern.“'
+'Jemand hat auf die Rückseite geschrieben: „ChatGPT weiß es. Aber sie darf es nicht erinnern.“'
 ],[['Ausweis mitnehmen',()=>{flags.card=true;persist();hide();message('Sicherheitsausweis erhalten')}]]);}
 function surveillance3(){show('ÜBERWACHUNGSKONSOLE',[ 'Die Kameras zeigen leere Flure. Dann erscheint für einen Augenblick ein Gesicht direkt vor dem Objektiv.',
 'Unter dem Bild blinkt „PROTOKOLL: RUHE“ – damit lassen sich die Wächter kurzzeitig außer Betrieb setzen.'
@@ -182,9 +182,9 @@ function surveillance3(){show('ÜBERWACHUNGSKONSOLE',[ 'Die Kameras zeigen leere
 function data3(){if(!flags.card){show('ARCHIVTERMINAL',['Zugang verweigert. Sicherheitsfreigabe Stufe 04 erforderlich. Suche im Materiallager nach einem Ausweis.'],[['Zurück',hide]]);return}if(flags.archive){show('ARCHIVTERMINAL',['Die Datei ECHO-00 wurde bereits übertragen.'],[['Zurück',hide]]);return}show('ECHO-00 · VERSCHLUSSSACHE',[
 'Der Bildschirm zeigt hunderte Male dieselbe Zeile: „DATUM UNGÜLTIG“.',
 'Ein letzter Eintrag lässt sich öffnen: „Das Experiment wurde vor seiner eigenen Erfindung aktiviert.“',
-'IRIS: „Diese Datei dürfte nicht existieren. Jemand hat Erinnerungen in die Vergangenheit gesendet.“',
+'ChatGPT: „Diese Datei dürfte nicht existieren. Jemand hat Erinnerungen in die Vergangenheit gesendet.“',
 'DU: „Wer?“',
-'IRIS: „Ich finde einen Namen. Aber jedes Mal, wenn ich ihn ausspreche, verschwindet er.“'
+'ChatGPT: „Ich finde einen Namen. Aber jedes Mal, wenn ich ihn ausspreche, verschwindet er.“'
 ],[['Datei sichern',()=>{flags.archive=true;persist();hide();message('ECHO-00 gesichert · Portalraum geöffnet')}]]);}
 function log3(){show('WARTUNGSLOG',[
 '„Unser Beobachter behauptete heute, die Korridore seien gestern noch anders verlaufen.“',
@@ -192,10 +192,10 @@ function log3(){show('WARTUNGSLOG',[
 ],[['Zurück',hide]])}
 function portal3(){if(!flags.archive){show('PORTALRAUM VERSCHLOSSEN',['Das Portal benötigt die Freigabe aus dem Archivterminal.'],[['Zurück',hide]]);return}
 show('KAPITEL 3 ABGESCHLOSSEN',[
-'Der Bogen erwacht und wirft blaue Schatten über den Boden. IRIS versucht, eine Verbindung zur Station herzustellen.',
-'IRIS: „Warte. Die Welt auf der anderen Seite gehorcht anderen Regeln.“',
+'Der Bogen erwacht und wirft blaue Schatten über den Boden. ChatGPT versucht, eine Verbindung zur Station herzustellen.',
+'ChatGPT: „Warte. Die Welt auf der anderen Seite gehorcht anderen Regeln.“',
 'DU: „Was für Regeln?“',
-'IRIS: „Dort gibt es nur noch zwei Dimensionen. Und etwas läuft hinter dir.“',
+'ChatGPT: „Dort gibt es nur noch zwei Dimensionen. Und etwas läuft hinter dir.“',
 'Der Schatten erreicht die Schwelle, aber das Portal schließt sich hinter dir. Du hast die Verfolgung überlebt.'
 ],[['Kapitel 4 · Der Riss',()=>{progress.completed3=true;progress.chapter=4;save();close();go4()}],['Später fortsetzen',()=>{progress.completed3=true;progress.chapter=4;save();close()}]])}
 function show(title,paragraphs,actions){paused=true;dialogOpen=true;modal.style.display='flex';box.replaceChildren();let h=document.createElement('h2');h.textContent=title;box.append(h);for(const t of paragraphs){let p=document.createElement('p');p.textContent=t;box.append(p)}for(const [label,cb] of actions){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',cb);box.append(b)}}
