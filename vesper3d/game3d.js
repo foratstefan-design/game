@@ -1,4 +1,24 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
+// Edition 10.2: Load the 3D engine with fallbacks, not just a single CDN.
+// This is still Three.js r164 everywhere (no mixing engine versions).
+const THREE = await (async () => {
+  const sources = [
+    'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js',
+    'https://unpkg.com/three@0.164.1/build/three.module.js',
+    'https://esm.sh/three@0.164.1'
+  ];
+  const failures = [];
+  for (const address of sources) {
+    try {
+      const engine = await import(address);
+      if (engine.WebGLRenderer && engine.Scene && engine.Vector3) return engine;
+      throw new Error('Unvollständiges 3D-Modul');
+    } catch (error) {
+      failures.push(new URL(address).hostname + ': ' + (error?.message || String(error)));
+      console.warn('[BAUMHOLDER 3D] Three.js Anbieter nicht erreichbar:', address, error);
+    }
+  }
+  throw new Error('Die 3D-Grafikbibliothek konnte nicht geladen werden.\n' + failures.join('\n'));
+})();
 
 /* NEON RIFT: ECHOES / BAUMHOLDER 3D – Edition 3
  * Engine: Three.js. Lightweight mobile-friendly material and geometry setup.
@@ -13,7 +33,12 @@ const mobile = matchMedia('(pointer:coarse)').matches;
 if (mobile) document.body.classList.add('mobile');
 
 // ── Renderer, scene and hardware budget ───────────────────────────────
-const renderer = new THREE.WebGLRenderer({antialias:!mobile, powerPreference:'high-performance', alpha:false});
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({antialias:!mobile, powerPreference:'high-performance', alpha:false});
+} catch (error) {
+  throw new Error('Der 3D-Grafikmodus (WebGL) konnte nicht gestartet werden: ' + (error?.message || String(error)));
+}
 renderer.domElement.className = 'scene';
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = false;
