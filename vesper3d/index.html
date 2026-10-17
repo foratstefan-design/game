@@ -1,12 +1,68 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0c1728"><title>NEON RIFT — VESPER 3D · BUILD 2</title><style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071322;color:#f0f7ff;font:15px system-ui,Arial;touch-action:none}canvas{display:block}button{font:inherit;cursor:pointer}#hud{position:fixed;inset:0;pointer-events:none}#hud button,#hud .touch{pointer-events:auto}.top{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.chip{background:#081526dc;border:1px solid #7bacc044;border-radius:13px;padding:9px 12px;backdrop-filter:blur(10px)}#objective{max-width:min(540px,76vw);line-height:1.45}#objective small{color:#91c6d5;display:block}#menuBtn{background:#132b3e;color:white;border:1px solid #5c8da0;padding:10px;border-radius:12px}#prompt{position:absolute;left:50%;bottom:25%;transform:translateX(-50%);background:#11283deb;border:1px solid #70d9db;border-radius:10px;padding:10px 15px;display:none;text-align:center}#dialogue,#menu,#intro{pointer-events:auto;position:absolute;inset:0;background:#020811c9;display:flex;align-items:center;justify-content:center;padding:20px}#dialogue[hidden],#menu[hidden],#intro[hidden]{display:none}.panel{width:min(660px,96vw);max-height:85vh;overflow:auto;background:linear-gradient(145deg,#102a40,#0a1729);border:1px solid #5c94ad;border-radius:18px;padding:23px;box-shadow:0 20px 100px #000a}.panel h1{font-size:clamp(22px,5vw,37px);margin:0 0 12px}.panel h2{font-size:22px;margin:0 0 8px}.panel p{line-height:1.65;color:#d0e2e9}.panel button,.action{border:1px solid #6be4da;background:#147c86;color:#fff;border-radius:10px;padding:11px 16px;margin:6px 6px 0 0}.panel button.alt{background:#172d43;border-color:#4c728c}.tag{letter-spacing:.2em;color:#7ee5e4;font-size:12px;font-weight:bold}#toast{position:absolute;top:90px;left:50%;transform:translateX(-50%);background:#142b3ef0;border:1px solid #83c4d4;border-radius:10px;padding:10px 16px;display:none;max-width:80vw;text-align:center}#minimap{position:absolute;right:12px;top:72px;width:148px;height:148px;border-radius:12px;background:#071424cc;border:1px solid #638b9a88}#controls{position:absolute;bottom:14px;left:12px;right:12px;display:none;justify-content:space-between;align-items:end;pointer-events:none}.touch{pointer-events:auto;touch-action:none;user-select:none}#stick{width:128px;height:128px;border-radius:50%;border:2px solid #8cdee58a;background:#16445a77;position:relative}#nub{position:absolute;left:41px;top:41px;width:44px;height:44px;border-radius:50%;background:#8ae4e8b5}#touchActions{display:flex;flex-direction:column;gap:10px}#touchActions button{width:80px;height:63px;border-radius:17px;border:1px solid #7cddda;background:#16475bba;color:white;font-weight:bold}#hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:12px;color:#e4f5ffad;text-align:center;white-space:nowrap}#cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:5px;height:5px;border-radius:50%;background:#ffffff88}body.mobile #controls{display:flex}body.mobile #hint{display:none}body.mobile #minimap{width:108px;height:108px;top:70px}body.mobile #objective{font-size:12px;max-width:64vw}body.mobile .chip{padding:7px}body.mobile #prompt{bottom:32%}#intro .panel{max-width:560px}@media(max-height:450px){#stick{width:92px;height:92px}#nub{left:28px;top:28px;width:32px;height:32px}#touchActions button{height:45px;width:70px}#minimap{width:90px!important;height:90px!important}#intro .panel{padding:14px}}
-</style></head><body><div id="hud"><div class="top"><div class="chip" id="objective"><small>VESPER · 3D-BUILD 2 · 30 JAHRE ZUVOR</small><span id="goal">Ein neuer Morgen</span></div><div style="display:flex;gap:8px;align-items:center"><a href="../" style="display:inline-block;background:#12263c;color:white;border:1px solid #608da2;border-radius:10px;padding:10px;text-decoration:none;pointer-events:auto">← Kapitel 1–5</a><button id="menuBtn">☰ Journal</button></div></div><canvas id="minimap" width="256" height="256"></canvas><div id="cross"></div><div id="prompt">E · Interagieren</div><div id="toast"></div><div id="hint">WASD: Bewegen · Maus ziehen: Kamera drehen · E: Interagieren · Shift: Sprinten · Leertaste: Springen</div><div id="controls"><div id="stick" class="touch"><div id="nub"></div></div><div id="touchActions"><button id="act">AKTION</button><button id="jump">SPRUNG</button><button id="run">RENNEN</button></div></div><div id="intro"><div class="panel"><div class="tag">NEON RIFT: ECHOES</div><h1>30 JAHRE ZUVOR</h1><p>07:14 Uhr. Vesper erwacht im Licht der Hochbahn. Hinter den Fenstern deines Apartments fahren die ersten Züge. Auf deinem Kommunikator blinkt eine Nachricht von Mara: <em>„Du bist doch heute in der Stadt? Komm bitte vorbei. Und sag niemandem etwas von der Aufnahme.“</em></p><p>Du weißt nicht, wer du einmal sein wirst. Heute bist du einfach nur ein Mensch in einer Stadt, die noch eine Zukunft hat.</p><button id="start">Aufwachen und VESPER betreten</button><p style="font-size:12px">3D-Browser-Prototyp · Am iPhone am besten quer spielen. Zum ersten Laden wird Internet benötigt.</p></div></div><div id="dialogue" hidden><div class="panel"><div class="tag" id="speaker"></div><h2 id="dialogTitle"></h2><p id="dialogText"></p><div id="choices"></div></div></div><div id="menu" hidden><div class="panel"><div class="tag">STADTJOURNAL</div><h2>VESPER · Dein erster Tag</h2><p id="journal"></p><div id="missionList"></div><button id="closeMenu">Zurück in die Stadt</button><button class="alt" id="resetSave">Neuen Spielstand beginnen</button></div></div></div><script type="module">
-import('./game3d.js?v=2').catch(error => {
-  document.getElementById('intro').hidden = true;
-  const alert = document.createElement('div');
-  alert.style.cssText = 'position:fixed;inset:10%;z-index:200;display:grid;place-content:center;padding:22px;border:2px solid #f78;background:#071321;color:white;border-radius:16px;text-align:center;line-height:1.65';
-  alert.innerHTML = '<h2>Die 3D-Grafik konnte nicht gestartet werden.</h2><p>Bitte prüfe deine Internetverbindung und lade die Seite neu. Für die 3D-Engine wird Three.js benötigt.</p><p><a style="color:#9df" href="../">Zurück zu Kapitel 1–5</a></p>';
-  document.body.appendChild(alert);
-  console.error('VESPER 3D Start fehlgeschlagen:',error);
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#152838">
+<title>NEON RIFT: ECHOES — Vesper 3D / Edition 3</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#eff5fa;background:#8eaabb;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;touch-action:none}
+canvas.scene{display:block;position:fixed;inset:0;touch-action:none}
+button,a{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #70eff0;outline-offset:3px}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:2}
+#hud button,#hud a,#hud .touch,#hud .panel{pointer-events:auto}
+.top{position:absolute;top:max(env(safe-area-inset-top),10px);left:max(env(safe-area-inset-left),10px);right:max(env(safe-area-inset-right),10px);display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.chip{border:1px solid #d0e6f44f;background:#0d2137df;box-shadow:0 4px 20px #1020344a;border-radius:14px;padding:9px 13px;backdrop-filter:blur(8px)}
+#objective{max-width:min(500px,65vw);line-height:1.35;font-size:14px}#objective small{display:block;font-size:11px;color:#90c4d1;font-weight:700;letter-spacing:.11em;margin-bottom:4px}
+.topButtons{display:flex;gap:6px;align-items:center}.smallBtn{color:#ecf9fe;background:#112e45e8;border:1px solid #719bad7f;padding:9px 11px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap}
+#minimap{position:absolute;top:72px;right:12px;width:142px;height:142px;border:2px solid #b1d4dfa6;border-radius:15px;background:#152c39df;box-shadow:0 6px 18px #0003}
+#prompt{position:absolute;left:50%;bottom:21%;transform:translateX(-50%);background:#102c43ec;border:1px solid #86e5e5;border-radius:12px;padding:10px 15px;text-align:center;display:none;max-width:80vw;font-size:14px;font-weight:700;white-space:nowrap}
+#toast{position:absolute;left:50%;top:90px;transform:translateX(-50%);display:none;background:#11293bde;border:1px solid #6cc5cc;border-radius:12px;padding:10px 16px;max-width:min(500px,80vw);line-height:1.4;text-align:center}
+#controls{display:none;position:absolute;bottom:max(env(safe-area-inset-bottom),12px);left:max(env(safe-area-inset-left),12px);right:max(env(safe-area-inset-right),12px);justify-content:space-between;align-items:end;pointer-events:none}
+#stick{width:118px;height:118px;border-radius:50%;background:#1b344b75;border:2px solid #d1e7f17a;position:relative;touch-action:none;pointer-events:auto}
+#nub{position:absolute;width:44px;height:44px;left:35px;top:35px;border-radius:50%;background:#c9eff5bc;border:2px solid #ffffffaf;pointer-events:none}
+#touchActions{display:flex;gap:9px;align-items:flex-end}#touchActions button{height:58px;min-width:72px;border-radius:16px;color:#fff;font-size:12px;font-weight:800;background:#143b56bd;border:1px solid #b6e2eac7;touch-action:none;box-shadow:0 4px 14px #0003}
+#touchActions button:first-child{background:#1b686cdb;border-color:#91e5d9}
+#hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);white-space:nowrap;color:#f3f7ff;font-size:12px;text-shadow:0 1px 3px #000,0 1px 12px #000}
+.overlay{position:absolute;inset:0;background:#06111bbb;display:flex;align-items:center;justify-content:center;padding:18px;pointer-events:auto}
+.overlay[hidden]{display:none}
+.panel{max-height:min(88vh,690px);overflow-y:auto;width:min(670px,94vw);border-radius:19px;background:linear-gradient(145deg,#1c3347,#101d2f);border:1px solid #92c5d267;box-shadow:0 28px 100px #000a;padding:24px;line-height:1.62}
+.panel h1{font-size:clamp(23px,4.4vw,41px);letter-spacing:.02em;line-height:1.15;margin:6px 0 12px}
+.panel h2{font-size:clamp(20px,3.5vw,29px);line-height:1.2;margin:5px 0 10px}
+.panel p{color:#d0e2e8;margin:10px 0 16px}.panel .eyebrow{font-size:11px;font-weight:800;letter-spacing:.22em;color:#8be1d9}.panel .buttonRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.panel button{background:#167780;border:1px solid #85e0df;color:white;font-weight:700;padding:11px 15px;border-radius:11px}.panel button.secondary{background:#1d3b54;border-color:#82a4b69e}.panel button:disabled{opacity:.45;cursor:default}
+#dialogue .panel{max-width:620px}#dialogueText{white-space:pre-line}
+#intro{background:linear-gradient(125deg,#061627dd,#102a35e4)}
+#intro .panel{max-width:600px;background:linear-gradient(120deg,#172e41,#102134)}
+#storyCard{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:9px;background:#09121d;pointer-events:auto;opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s;z-index:5;padding:24px}
+#storyCard.active{opacity:1;visibility:visible}#storyCard .time{font-size:clamp(25px,6vw,56px);font-weight:900;letter-spacing:.16em}#storyCard small{letter-spacing:.25em;color:#9bc4d1}
+#journalBody{display:grid;gap:8px;margin:12px 0}.quest{padding:12px;background:#0c2334;border:1px solid #345a69;border-radius:11px}.quest strong{color:#bfece6}.quest p{margin:4px 0 0;font-size:13px}
+#performance{position:absolute;bottom:28px;right:12px;color:#eff;font-size:11px;text-shadow:0 1px 3px #000;display:none}
+body.mobile #controls{display:flex}body.mobile #hint{display:none}body.mobile #minimap{width:97px;height:97px;top:72px}body.mobile #objective{font-size:11px;max-width:53vw}body.mobile #objective small{font-size:9px}body.mobile .chip{padding:7px 9px}body.mobile .smallBtn{padding:8px 8px;font-size:11px}body.mobile #prompt{bottom:26%}
+@media(max-height:470px){.panel{padding:15px;max-height:94vh}.panel p{margin:5px 0 9px}#stick{width:87px;height:87px}#nub{width:31px;height:31px;left:26px;top:26px}#touchActions button{height:43px;min-width:63px;font-size:10px}#prompt{bottom:28%;font-size:11px}#minimap{width:85px!important;height:85px!important}}
+</style>
+</head>
+<body>
+<div id="hud">
+<div class="top"><div class="chip" id="objective"><small>VESPER · 3D EDITION 3 · 30 JAHRE ZUVOR</small><span id="goal">Ein ganz normaler Morgen</span></div><div class="topButtons"><a class="smallBtn" href="../" title="Zurück zum Prolog">↩ Prolog</a><button class="smallBtn" id="menuBtn">☰ Journal</button></div></div>
+<canvas id="minimap" width="256" height="256" aria-label="Stadtkarte"></canvas>
+<div id="prompt"></div><div id="toast" role="status" aria-live="polite"></div>
+<div id="hint">WASD · Maus ziehen: Kamera · E: Sprechen / Türen öffnen · Shift: Rennen · Leertaste: Springen</div>
+<div id="controls"><div id="stick" class="touch"><div id="nub"></div></div><div id="touchActions"><button id="act">AKTION</button><button id="jump">SPRUNG</button><button id="run">RENNEN</button></div></div>
+<div id="performance"></div>
+<div id="intro" class="overlay"><div class="panel"><div class="eyebrow">NEON RIFT · ECHOES</div><h1>30 JAHRE ZUVOR</h1><p>07:14 Uhr. Ein vorbeifahrender Zug lässt die Scheiben deiner Wohnung leise klirren. Auf dem Tisch steht kalter Kaffee. Jemand hat gestern Abend dreimal angerufen.</p><p>Du hast heute frei. Zumindest war das der Plan.</p><div class="buttonRow"><button id="start">Aufstehen</button></div><p style="font-size:12px;color:#8eb7c5">3D-Edition 3 · Empfohlen: iPhone quer halten · Three.js lädt beim ersten Besuch aus dem Internet.</p></div></div>
+<div id="dialogue" class="overlay" hidden><div class="panel"><div class="eyebrow" id="speaker"></div><h2 id="dialogTitle"></h2><p id="dialogueText"></p><div class="buttonRow" id="choices"></div></div></div>
+<div id="menu" class="overlay" hidden><div class="panel"><div class="eyebrow">VESPER · JOURNAL</div><h2>Dein erster Tag</h2><p>Die Stadt erwartet nichts von dir. Die Menschen schon.</p><div id="journalBody"></div><div class="buttonRow"><button id="closeMenu">Weiterspielen</button><button class="secondary" id="qualityBtn">Grafik: Auto</button><button class="secondary" id="resetSave">Spielstand zurücksetzen</button></div></div></div>
+<div id="storyCard"><small id="storyEyebrow">VESPER</small><div class="time" id="storyTime">30 JAHRE ZUVOR</div><p id="storyCaption" style="color:#b8d6df;font-size:15px;max-width:540px;margin:0 auto"></p></div>
+</div>
+<script type="module">
+import('./game3d.js?v=3').catch(error => {
+  console.error('VESPER 3D',error);
+  const box=document.createElement('div');box.style.cssText='position:fixed;inset:8%;z-index:999;background:#101e2c;color:white;display:grid;place-content:center;padding:25px;border:2px solid #f99;border-radius:15px;text-align:center';
+  box.innerHTML='<h2>3D-Spiel konnte nicht geladen werden</h2><p>Prüfe, ob <code>game3d.js</code> im selben Ordner liegt, und lade die Seite bei bestehender Internetverbindung neu.</p>';
+  document.body.append(box);
 });
-</script></body></html>
+</script>
+</body>
+</html>
