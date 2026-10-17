@@ -297,9 +297,9 @@ npc('Nico',-33,40,0x39917f,'tarek');
 npc('Agnes',18,39,0x9176af,'nora');
 npc('Dr. Patrick',87,-9,0x476e9f,'vale');
 npc('Rudi',-82,40,0x9b824e,'station');
-npc('Alvin',-84,-10,0xad7168,'jun');
+npc('Alwin',-84,-10,0xad7168,'jun');
 // Stadtwerke-Auszubildender mit einer optionalen Stadtmission.
-npc('Benni',-20,-61,0x4d718c,'benni');
+npc('Benny',-20,-61,0x4d718c,'benni');
 // Weitere Verwandte der großen Familie: eigene Arbeit, eigene Dialoge.
 npc('Annika',-92,-11,0xb27991,'annika'); // Floristin, bei Café Luna
 npc('Tobi',17,-61,0x7488ae,'tobi'); // Paketbote, beim Park
@@ -631,15 +631,15 @@ Dann führt sie dich zum Fenster und legt eine Karte der alten Stadt aus. „Ich
       ]);
   }else if(role==='benni'){
     if (!save.metStefan){
-      sceneText('BENNI · STADTWERKE','Ein ungewöhnlicher Ausschlag',
-        'Benni sitzt auf einer Bank am Park und faltet einen zerknitterten Messbericht. „Du kennst dich doch mit Technik aus? Seit zwei Tagen meldet ein Messkasten Stromspitzen, obwohl hier gar keine Leitung für so große Lasten verläuft.“\n\nEr blickt zu den Häusern. „Die Leute beschweren sich über flackernde Lampen. Ich möchte nur herausfinden, warum.“',[
+      sceneText('BENNY · STADTWERKE','Ein ungewöhnlicher Ausschlag',
+        'Benny sitzt auf einer Bank am Park und faltet einen zerknitterten Messbericht. „Du kennst dich doch mit Technik aus? Seit zwei Tagen meldet ein Messkasten Stromspitzen, obwohl hier gar keine Leitung für so große Lasten verläuft.“\n\nEr blickt zu den Häusern. „Die Leute beschweren sich über flackernde Lampen. Ich möchte nur herausfinden, warum.“',[
           {label:'Ich sehe mir den Messkasten an.',run:()=>{save.metStefan=true;flash('Nebenauftrag: Messkasten am Park untersuchen.')}},
           {label:'Vielleicht später.',secondary:true}
         ]);
     } else if(save.powerReadings&&!save.powerCompleted){
-      sceneText('BENNI','Daten, die nicht hierhergehören',
-        'Benni liest die Werte zweimal. „Da ist ein Impuls, der jede Nacht zur selben Minute auftaucht. Aber der Verbrauch hat kein Ziel. Das ist, als würde eine ganze Straße Strom ziehen, ohne dass irgendwo ein Licht angeht.“\n\nEr steckt den Bericht ein. „Ich frage morgen in der Stadtverwaltung nach. Danke für deine Hilfe.“',[
-          {label:'Sag mir, wenn du etwas findest.',run:()=>{save.powerCompleted=true;flash('Nebenauftrag abgeschlossen · Benni forscht weiter.')}}
+      sceneText('BENNY','Daten, die nicht hierhergehören',
+        'Benny liest die Werte zweimal. „Da ist ein Impuls, der jede Nacht zur selben Minute auftaucht. Aber der Verbrauch hat kein Ziel. Das ist, als würde eine ganze Straße Strom ziehen, ohne dass irgendwo ein Licht angeht.“\n\nEr steckt den Bericht ein. „Ich frage morgen in der Stadtverwaltung nach. Danke für deine Hilfe.“',[
+          {label:'Sag mir, wenn du etwas findest.',run:()=>{save.powerCompleted=true;flash('Nebenauftrag abgeschlossen · Benny forscht weiter.')}}
         ]);
     } else if(save.powerCompleted){
       sceneText('BENNI','Keine Antwort von der Stadt',
@@ -685,8 +685,8 @@ Dann führt sie dich zum Fenster und legt eine Karte der alten Stadt aus. „Ich
         {label:'Was ist unter dem Bahnhof?',run:()=>{save.metLeo=true;sceneText('LEON','Kein Licht am Ende','„Da unten haben die Uhren aufgehört zu laufen. Mehr weiß ich nicht. Vielleicht ist es besser so.“',[{label:'Ich werde nachforschen.'}])}}
       ]);
   }else if(role==='jun'){
-    sceneText('ALVIN · CAFÉ LUNA','Ein seltsamer Gast',
-      '„Annika hilft heute bei der Floristin aus. Ich wollte sie eigentlich fragen, ob wir unser Leben gemeinsam planen wollen“, sagt Alvin und lächelt verlegen. „Den richtigen Moment für die Verlobung suche ich noch.“
+    sceneText('ALWIN · CAFÉ LUNA','Ein seltsamer Gast',
+      '„Annika hilft heute bei der Floristin aus. Ich wollte sie eigentlich fragen, ob wir unser Leben gemeinsam planen wollen“, sagt Alwin und lächelt verlegen. „Den richtigen Moment für die Verlobung suche ich noch.“
 
 „Leon? Klar kenne ich ihn. Er trank jeden Donnerstag Tee, obwohl er Tee hasste. Letzte Woche hat er plötzlich das Glas abgestellt und gesagt: ,Ich glaube, wir sind schon einmal hier gewesen.‘“',[
         {label:'Hat er noch etwas gesagt?',run:()=>{save.metJun=true;sceneText('ALVIN','Eine Erinnerung','„Er hat nach einer alten Fotografie gefragt. Angeblich hing sie mal an der Wand der Markthalle. Ich habe ihm gesagt, dass das Gebäude erst zwölf Jahre alt ist.“',[{label:'Seltsam.'}])}},
