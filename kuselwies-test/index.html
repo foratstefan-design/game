@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#152838">
+<title>NEON RIFT: ECHOES — Kuselwies Testkarte</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#eff5fa;background:#8eaabb;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;touch-action:none}
+/* V7 iPhone: prevent tap selection, text magnifier/callout and blue press highlight. */
+html,body,body *,button,canvas,a{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent!important}
+canvas.scene{display:block;position:fixed;inset:0;touch-action:none}
+button,a{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #70eff0;outline-offset:3px}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:2}
+#hud button,#hud a,#hud .touch,#hud .panel{pointer-events:auto}
+.top{position:absolute;top:max(env(safe-area-inset-top),10px);left:max(env(safe-area-inset-left),10px);right:max(env(safe-area-inset-right),10px);display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.chip{border:1px solid #d0e6f44f;background:#0d2137df;box-shadow:0 4px 20px #1020344a;border-radius:14px;padding:9px 13px;backdrop-filter:blur(8px)}
+#objective{max-width:min(500px,65vw);line-height:1.35;font-size:14px}#objective small{display:block;font-size:11px;color:#90c4d1;font-weight:700;letter-spacing:.11em;margin-bottom:4px}
+.topButtons{display:flex;gap:6px;align-items:center}.smallBtn{color:#ecf9fe;background:#112e45e8;border:1px solid #719bad7f;padding:9px 11px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap}
+#minimap{position:absolute;top:72px;right:12px;width:142px;height:142px;border:2px solid #b1d4dfa6;border-radius:15px;background:#152c39df;box-shadow:0 6px 18px #0003}
+#prompt{position:absolute;left:50%;bottom:21%;transform:translateX(-50%);background:#102c43ec;border:1px solid #86e5e5;border-radius:12px;padding:10px 15px;text-align:center;display:none;max-width:80vw;font-size:14px;font-weight:700;white-space:nowrap}
+#toast{position:absolute;left:50%;top:90px;transform:translateX(-50%);display:none;background:#11293bde;border:1px solid #6cc5cc;border-radius:12px;padding:10px 16px;max-width:min(500px,80vw);line-height:1.4;text-align:center}
+#controls{display:none;position:absolute;bottom:max(env(safe-area-inset-bottom),12px);left:max(env(safe-area-inset-left),12px);right:max(env(safe-area-inset-right),12px);justify-content:space-between;align-items:end;pointer-events:none}
+#stick{width:118px;height:118px;border-radius:50%;background:#1b344b75;border:2px solid #d1e7f17a;position:relative;touch-action:none;pointer-events:auto}
+#nub{position:absolute;width:44px;height:44px;left:35px;top:35px;border-radius:50%;background:#c9eff5bc;border:2px solid #ffffffaf;pointer-events:none}
+#touchActions{display:flex;gap:9px;align-items:flex-end}#touchActions button{height:58px;min-width:72px;border-radius:16px;color:#fff;font-size:12px;font-weight:800;background:#143b56bd;border:1px solid #b6e2eac7;touch-action:none;box-shadow:0 4px 14px #0003}
+#touchActions button:first-child{background:#1b686cdb;border-color:#91e5d9}
+#hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);white-space:nowrap;color:#f3f7ff;font-size:12px;text-shadow:0 1px 3px #000,0 1px 12px #000}
+.overlay{position:absolute;inset:0;background:#06111bbb;display:flex;align-items:center;justify-content:center;padding:18px;pointer-events:auto}
+.overlay[hidden]{display:none}
+.panel{max-height:min(88vh,690px);overflow-y:auto;width:min(670px,94vw);border-radius:19px;background:linear-gradient(145deg,#1c3347,#101d2f);border:1px solid #92c5d267;box-shadow:0 28px 100px #000a;padding:24px;line-height:1.62}
+.panel h1{font-size:clamp(23px,4.4vw,41px);letter-spacing:.02em;line-height:1.15;margin:6px 0 12px}
+.panel h2{font-size:clamp(20px,3.5vw,29px);line-height:1.2;margin:5px 0 10px}
+.panel p{color:#d0e2e8;margin:10px 0 16px}.panel .eyebrow{font-size:11px;font-weight:800;letter-spacing:.22em;color:#8be1d9}.panel .buttonRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.panel button{background:#167780;border:1px solid #85e0df;color:white;font-weight:700;padding:11px 15px;border-radius:11px}.panel button.secondary{background:#1d3b54;border-color:#82a4b69e}.panel button:disabled{opacity:.45;cursor:default}
+#dialogue .panel{max-width:620px}#dialogueText{white-space:pre-line}
+#intro{background:linear-gradient(125deg,#061627dd,#102a35e4)}
+#intro .panel{max-width:600px;background:linear-gradient(120deg,#172e41,#102134)}
+#storyCard{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:9px;background:#09121d;pointer-events:auto;opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s;z-index:5;padding:24px}
+#storyCard.active{opacity:1;visibility:visible}#storyCard .time{font-size:clamp(25px,6vw,56px);font-weight:900;letter-spacing:.16em}#storyCard small{letter-spacing:.25em;color:#9bc4d1}
+#journalBody{display:grid;gap:8px;margin:12px 0}.quest{padding:12px;background:#0c2334;border:1px solid #345a69;border-radius:11px}.quest strong{color:#bfece6}.quest p{margin:4px 0 0;font-size:13px}
+#performance{position:absolute;bottom:28px;right:12px;color:#eff;font-size:11px;text-shadow:0 1px 3px #000;display:none}
+body.mobile #controls{display:flex}body.mobile #hint{display:none}body.mobile #minimap{width:97px;height:97px;top:72px}body.mobile #objective{font-size:11px;max-width:53vw}body.mobile #objective small{font-size:9px}body.mobile .chip{padding:7px 9px}body.mobile .smallBtn{padding:8px 8px;font-size:11px}body.mobile #prompt{bottom:26%}
+@media(max-height:470px){.panel{padding:15px;max-height:94vh}.panel p{margin:5px 0 9px}#stick{width:87px;height:87px}#nub{width:31px;height:31px;left:26px;top:26px}#touchActions button{height:43px;min-width:63px;font-size:10px}#prompt{bottom:28%;font-size:11px}#minimap{width:85px!important;height:85px!important}}
+</style>
+</head>
+<body>
+<div id="hud"><div style="position:fixed;left:10px;bottom:4px;z-index:3;font:10px system-ui;color:#fff8;pointer-events:none">KONZEPTKARTE · KEIN ORIGINALGETREUER NACHBAU</div>
+<div class="top"><div class="chip" id="objective"><small>KUSELWIES · TESTKARTE 12 · 30 JAHRE ZUVOR</small><span id="goal">Ein ganz normaler Morgen</span></div><div class="topButtons"><a class="smallBtn" href="../" title="Zurück zum Prolog">↩ Prolog</a><button class="smallBtn" id="menuBtn">☰ Journal</button></div></div>
+<canvas id="minimap" width="256" height="256" aria-label="Stadtkarte"></canvas>
+<div id="prompt"></div><div id="toast" role="status" aria-live="polite"></div>
+<div id="hint">WASD · Maus ziehen: Kamera · E: Sprechen / Türen öffnen · Shift: Rennen · Leertaste: Springen</div>
+<div id="controls"><div id="stick" class="touch"><div id="nub"></div></div><div id="touchActions"><button id="act">AKTION</button><button id="jump">SPRUNG</button><button id="run">RENNEN</button></div></div>
+<div id="performance"></div>
+<div id="intro" class="overlay"><div class="panel"><div class="eyebrow">NEON RIFT · ECHOES</div><h1>30 JAHRE ZUVOR</h1><p>07:14 Uhr. Ein vorbeifahrender Zug lässt die Scheiben deiner Wohnung leise klirren. Auf dem Tisch steht kalter Kaffee. Jemand hat gestern Abend dreimal angerufen.</p><p>Du bist Stefan. Die meisten deiner Verwandten wohnen ebenfalls in Baumholder. Du hast heute frei. Zumindest war das der Plan.</p><div class="buttonRow"><button id="start">Aufstehen</button></div><p style="font-size:12px;color:#8eb7c5">Kuselwies-Testkarte · Bewusst grafiksparend · Empfohlen: iPhone quer halten · Three.js lädt beim ersten Besuch aus dem Internet.</p></div></div>
+<div id="dialogue" class="overlay" hidden><div class="panel"><div class="eyebrow" id="speaker"></div><h2 id="dialogTitle"></h2><p id="dialogueText"></p><div class="buttonRow" id="choices"></div></div></div>
+<div id="menu" class="overlay" hidden><div class="panel"><div class="eyebrow">KUSELWIES · JOURNAL</div><h2>Stefans erster Tag · Kuselwies</h2><p>Deine große Familie hat ihr eigenes Leben, ihre Arbeit und ihre Geheimnisse.</p><div id="journalBody"></div><div class="buttonRow"><button id="closeMenu">Weiterspielen</button><button class="secondary" id="qualityBtn">Grafik: Auto</button><button class="secondary" id="resetSave">Spielstand zurücksetzen</button></div></div></div>
+<div id="storyCard"><small id="storyEyebrow">BAUMHOLDER</small><div class="time" id="storyTime">30 JAHRE ZUVOR</div><p id="storyCaption" style="color:#b8d6df;font-size:15px;max-width:540px;margin:0 auto"></p></div>
+</div>
+<script type="module">
+// Fix 10.2: Verify the local file and report actual load/runtime errors.
+// Previously the same generic notice appeared for every possible failure.
+async function showProblem(error,phase='Start') {
+  const message = String(error?.stack || error?.message || error);
+  console.error('[BAUMHOLDER 3D] ' + phase, error);
+  const curtain = document.createElement('div');
+  curtain.id = 'threeLoadError';
+  curtain.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#091623ed;color:#f5fbff;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+  const card = document.createElement('section');
+  card.style.cssText='width:min(670px,100%);max-height:95vh;overflow:auto;border:1px solid #dc8496;border-radius:15px;padding:20px;background:#13283b;font:14px/1.55 system-ui,sans-serif';
+  const heading = document.createElement('h2');heading.textContent='Baumholder 3D – Startfehler';heading.style.margin='0 0 8px';
+  const hint = document.createElement('p');
+  hint.textContent = 'Die eigentliche Fehlermeldung steht unten. Du kannst sie kopieren und mir schicken. Es werden keine Spielstände gelöscht.';
+  const details = document.createElement('pre');
+  details.textContent = phase + '\n' + message + '\nInternet: ' + (navigator.onLine ? 'laut Browser verbunden' : 'laut Browser offline') + '\nSeite: ' + location.pathname;
+  details.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;background:#06121d;padding:12px;border-radius:8px;color:#ffd0d9;font-size:12px;max-height:35vh;overflow:auto;-webkit-user-select:text;user-select:text';
+  const buttons=document.createElement('div');buttons.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:15px';
+  function btn(label,fn){const b=document.createElement('button');b.textContent=label;b.style.cssText='background:#1b6678;color:white;border:1px solid #9cdee5;border-radius:9px;padding:10px 13px;font:600 13px system-ui';b.onclick=fn;buttons.appendChild(b)}
+  btn('Fehlertext kopieren', async ()=> {try {await navigator.clipboard.writeText(details.textContent);alert('Fehlertext kopiert')} catch(e) {details.style.userSelect='text';const r=document.createRange();r.selectNodeContents(details);getSelection().removeAllRanges();getSelection().addRange(r)}});
+  btn('Seite neu laden',()=>location.reload());
+  btn('Spieldatei überprüfen',()=>location.assign('./game3d.js?v=12'));
+  card.append(heading,hint,details,buttons);curtain.append(card);document.body.append(curtain);
+}
+async function boot3D(){
+  try {
+    // A module import error would otherwise mask missing files and HTML-404s.
+    const response=await fetch('./game3d.js?check=12', {cache:'no-store'});
+    if(!response.ok) throw new Error('game3d.js ist nicht abrufbar: HTTP ' + response.status + '. Prüfe GitHub Pages und den Ordner vesper3d.');
+    const mime=response.headers.get('content-type') || '';
+    if(mime.includes('text/html')) throw new Error('game3d.js liefert HTML statt JavaScript. Die Datei ist auf GitHub Pages möglicherweise falsch hochgeladen.');
+  } catch (error){showProblem(error,'Datei prüfen');return}
+  try {
+    await import('./game3d.js?v=12');
+  } catch(error){showProblem(error,'3D-Modul starten')}
+}
+boot3D();
+</script>
+</body>
+</html>
