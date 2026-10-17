@@ -47,15 +47,15 @@ body.mobile #controls{display:flex}body.mobile #hint{display:none}body.mobile #m
 </head>
 <body>
 <div id="hud"><div style="position:fixed;left:10px;bottom:4px;z-index:3;font:10px system-ui;color:#fff8;pointer-events:none">KONZEPTKARTE · KEIN ORIGINALGETREUER NACHBAU</div>
-<div class="top"><div class="chip" id="objective"><small>KUSELWIES · TESTKARTE 12 · 30 JAHRE ZUVOR</small><span id="goal">Ein ganz normaler Morgen</span></div><div class="topButtons"><a class="smallBtn" href="../" title="Zurück zum Prolog">↩ Prolog</a><button class="smallBtn" id="menuBtn">☰ Journal</button></div></div>
+<div class="top"><div class="chip" id="objective"><small>KUSELWIES · HD-TEST 13 · 30 JAHRE ZUVOR</small><span id="goal">Ein ganz normaler Morgen</span></div><div class="topButtons"><a class="smallBtn" href="../" title="Zurück zum Prolog">↩ Prolog</a><button class="smallBtn" id="menuBtn">☰ Journal</button></div></div>
 <canvas id="minimap" width="256" height="256" aria-label="Stadtkarte"></canvas>
 <div id="prompt"></div><div id="toast" role="status" aria-live="polite"></div>
 <div id="hint">WASD · Maus ziehen: Kamera · E: Sprechen / Türen öffnen · Shift: Rennen · Leertaste: Springen</div>
 <div id="controls"><div id="stick" class="touch"><div id="nub"></div></div><div id="touchActions"><button id="act">AKTION</button><button id="jump">SPRUNG</button><button id="run">RENNEN</button></div></div>
 <div id="performance"></div>
-<div id="intro" class="overlay"><div class="panel"><div class="eyebrow">NEON RIFT · ECHOES</div><h1>30 JAHRE ZUVOR</h1><p>07:14 Uhr. Ein vorbeifahrender Zug lässt die Scheiben deiner Wohnung leise klirren. Auf dem Tisch steht kalter Kaffee. Jemand hat gestern Abend dreimal angerufen.</p><p>Du bist Stefan. Die meisten deiner Verwandten wohnen ebenfalls in Baumholder. Du hast heute frei. Zumindest war das der Plan.</p><div class="buttonRow"><button id="start">Aufstehen</button></div><p style="font-size:12px;color:#8eb7c5">Kuselwies-Testkarte · Bewusst grafiksparend · Empfohlen: iPhone quer halten · Three.js lädt beim ersten Besuch aus dem Internet.</p></div></div>
+<div id="intro" class="overlay"><div class="panel"><div class="eyebrow">NEON RIFT · ECHOES</div><h1>30 JAHRE ZUVOR</h1><p>07:14 Uhr. Ein vorbeifahrender Zug lässt die Scheiben deiner Wohnung leise klirren. Auf dem Tisch steht kalter Kaffee. Jemand hat gestern Abend dreimal angerufen.</p><p>Du bist Stefan. Die meisten deiner Verwandten wohnen ebenfalls in Baumholder. Du hast heute frei. Zumindest war das der Plan.</p><div class="buttonRow"><button id="start">Aufstehen</button></div><p style="font-size:12px;color:#8eb7c5">Kuselwies HD · Neue Hausmodelle, großer Spielplatz, lebendige Farben. Empfohlen: PC mit Grafik Hoch. Auf dem iPhone bei Bedarf Grafik Schnell. Three.js benötigt Internet.</p></div></div>
 <div id="dialogue" class="overlay" hidden><div class="panel"><div class="eyebrow" id="speaker"></div><h2 id="dialogTitle"></h2><p id="dialogueText"></p><div class="buttonRow" id="choices"></div></div></div>
-<div id="menu" class="overlay" hidden><div class="panel"><div class="eyebrow">KUSELWIES · JOURNAL</div><h2>Stefans erster Tag · Kuselwies</h2><p>Deine große Familie hat ihr eigenes Leben, ihre Arbeit und ihre Geheimnisse.</p><div id="journalBody"></div><div class="buttonRow"><button id="closeMenu">Weiterspielen</button><button class="secondary" id="qualityBtn">Grafik: Auto</button><button class="secondary" id="resetSave">Spielstand zurücksetzen</button></div></div></div>
+<div id="menu" class="overlay" hidden><div class="panel"><div class="eyebrow">KUSELWIES HD · JOURNAL</div><h2>Stefans erster Tag · Kuselwies</h2><p>Deine große Familie hat ihr eigenes Leben, ihre Arbeit und ihre Geheimnisse.</p><div id="journalBody"></div><div class="buttonRow"><button id="closeMenu">Weiterspielen</button><button class="secondary" id="qualityBtn">Grafik: Auto</button><button class="secondary" id="resetSave">Spielstand zurücksetzen</button></div></div></div>
 <div id="storyCard"><small id="storyEyebrow">BAUMHOLDER</small><div class="time" id="storyTime">30 JAHRE ZUVOR</div><p id="storyCaption" style="color:#b8d6df;font-size:15px;max-width:540px;margin:0 auto"></p></div>
 </div>
 <script type="module">
@@ -79,19 +79,19 @@ async function showProblem(error,phase='Start') {
   function btn(label,fn){const b=document.createElement('button');b.textContent=label;b.style.cssText='background:#1b6678;color:white;border:1px solid #9cdee5;border-radius:9px;padding:10px 13px;font:600 13px system-ui';b.onclick=fn;buttons.appendChild(b)}
   btn('Fehlertext kopieren', async ()=> {try {await navigator.clipboard.writeText(details.textContent);alert('Fehlertext kopiert')} catch(e) {details.style.userSelect='text';const r=document.createRange();r.selectNodeContents(details);getSelection().removeAllRanges();getSelection().addRange(r)}});
   btn('Seite neu laden',()=>location.reload());
-  btn('Spieldatei überprüfen',()=>location.assign('./game3d.js?v=12'));
+  btn('Spieldatei überprüfen',()=>location.assign('./game3d.js?v=13'));
   card.append(heading,hint,details,buttons);curtain.append(card);document.body.append(curtain);
 }
 async function boot3D(){
   try {
     // A module import error would otherwise mask missing files and HTML-404s.
-    const response=await fetch('./game3d.js?check=12', {cache:'no-store'});
-    if(!response.ok) throw new Error('game3d.js ist nicht abrufbar: HTTP ' + response.status + '. Prüfe GitHub Pages und den Ordner vesper3d.');
+    const response=await fetch('./game3d.js?check=13', {cache:'no-store'});
+    if(!response.ok) throw new Error('game3d.js ist nicht abrufbar: HTTP ' + response.status + '. Prüfe GitHub Pages und den Ordner kuselwies-hd.');
     const mime=response.headers.get('content-type') || '';
     if(mime.includes('text/html')) throw new Error('game3d.js liefert HTML statt JavaScript. Die Datei ist auf GitHub Pages möglicherweise falsch hochgeladen.');
   } catch (error){showProblem(error,'Datei prüfen');return}
   try {
-    await import('./game3d.js?v=12');
+    await import('./game3d.js?v=13');
   } catch(error){showProblem(error,'3D-Modul starten')}
 }
 boot3D();

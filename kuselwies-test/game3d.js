@@ -35,28 +35,29 @@ if (mobile) document.body.classList.add('mobile');
 // ── Renderer, scene and hardware budget ───────────────────────────────
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({antialias:!mobile, powerPreference:'high-performance', alpha:false});
+  renderer = new THREE.WebGLRenderer({antialias:!mobile, powerPreference:'high-performance', alpha:false, stencil:false});
 } catch (error) {
   throw new Error('Der 3D-Grafikmodus (WebGL) konnte nicht gestartet werden: ' + (error?.message || String(error)));
 }
 renderer.domElement.className = 'scene';
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = false;
-renderer.setClearColor(0xa3c5d7);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
+renderer.setClearColor(0xbad5df);
 document.body.insertBefore(renderer.domElement,$('hud'));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xa3c5d7);
-scene.fog = new THREE.Fog(0xa3c5d7,108,225);
-const camera = new THREE.PerspectiveCamera(66,1,.15,260);
-scene.add(new THREE.HemisphereLight(0xffffff,0x637b83,2.0));
-const sun = new THREE.DirectionalLight(0xffefda,1.45);
-sun.position.set(-60,95,32);
+scene.background = new THREE.Color(0xbad5df);
+scene.fog = new THREE.Fog(0xbad5df,170,410);
+const camera = new THREE.PerspectiveCamera(65,1,.18,620);
+scene.add(new THREE.HemisphereLight(0xf5faff,0x667a63,1.85));
+const sun = new THREE.DirectionalLight(0xffe3ba,2.05);
+sun.position.set(-72,120,25);
 sun.castShadow = false;
 scene.add(sun);
-let quality = 'auto';
+let quality = mobile ? 'auto' : 'high';
 function resize(){
   const w=innerWidth,h=innerHeight;
-  const dpr=quality==='low'?.62:quality==='high'?Math.min(devicePixelRatio,1.20):Math.min(devicePixelRatio,mobile?.82:1.0);
+  const dpr=quality==='low'?.62:quality==='high'?Math.min(devicePixelRatio,mobile?1.0:1.65):Math.min(devicePixelRatio,mobile?.78:Math.min(devicePixelRatio,1.35));
   renderer.setPixelRatio(dpr);
   renderer.setSize(w,h);
   camera.aspect=w/h;
@@ -68,7 +69,7 @@ addEventListener('resize',resize);
 // ── Materials: deliberately matte to avoid shiny, flickering streets ──
 const materialCache = new Map();
 function material(color){
-  if (!materialCache.has(color)) materialCache.set(color,new THREE.MeshLambertMaterial({color}));
+  if (!materialCache.has(color)) materialCache.set(color,new THREE.MeshStandardMaterial({color,roughness:.94,metalness:0}));
   return materialCache.get(color);
 }
 const M={
@@ -110,72 +111,146 @@ function textSign(parent,label,x,y,z,width=8){
   return s;
 }
 
-// ── KUSELWIES PREVIEW: one outer residential road, no roundabout ──
-// Small separate test map; plot arrangement is fictional until real references arrive.
-// No overlapping road meshes, textures, mirrors, realtime shadows or terrain physics.
-const MAP_LIMIT=143;
-flat(world,286,232,0,0,0,.24,M.soil);
-// The outer road runs past houses, never around the playground.
-const OUTER_ROAD=[
-  {x:0,z:-88,w:265,d:10.5}, {x:0,z:88,w:265,d:10.5},
-  {x:-125,z:0,w:10.5,d:165}, {x:125,z:0,w:10.5,d:165}
-];
-for(const r of OUTER_ROAD)flat(world,r.w,r.d,r.x,r.z,.034,.065,M.road);
-const OUTER_WALKS=[
-  {x:0,z:-79.2,w:258,d:2.7}, {x:0,z:79.2,w:258,d:2.7},
-  {x:-116,z:0,w:2.7,d:155}, {x:116,z:0,w:2.7,d:155}
-];
-for(const p of OUTER_WALKS)flat(world,p.w,p.d,p.x,p.z,.105,.07,M.pavement);
-// Grass of the large inner playground: a soft shape, but NO surrounding road.
-const playground = {x:0,z:1,rx:33,rz:29};
-const parkSurface = new THREE.Mesh(new THREE.CircleGeometry(1,48),M.grass);
-parkSurface.rotation.x=-Math.PI/2;
-parkSurface.scale.set(playground.rx,playground.rz,1);
-parkSurface.position.set(playground.x,.016,playground.z);
-world.add(parkSurface);
-// Two walkable pedestrian approaches between gardens, not car roads.
-const ACCESS_PATHS=[
-  {x1:-17,z1:76,x2:-14,z2:25,width:3.7},
-  {x1:17,z1:-76,x2:14,z2:-25,width:3.7}
-];
-function makePath(parent,x1,z1,x2,z2,width,mat,y=.1){
-  const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz);
-  const s=flat(parent,width,len,(x1+x2)/2,(z1+z2)/2,y,.055,mat);
-  s.rotation.y=Math.atan2(dx,dz);
-  return s;
+// ── KUSELWIES HD · fictional layout based on the described area ─────────
+// The only road is OUTSIDE the residential lots; the park is an inner green area.
+// IMPORTANT: This is concept-inspired; no exact real-world houses or parcel data.
+const MAP_LIMIT=155;
+const qualityBudget={};
+function canvasTexture(draw,size=256,repeatX=1,repeatY=1){
+ const c=document.createElement('canvas');c.width=c.height=size;
+ const g=c.getContext('2d');draw(g,size);
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;
+ t.repeat.set(repeatX,repeatY);t.colorSpace=THREE.SRGBColorSpace;
+ t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy?.()||1);
+ return t;
 }
-for(const p of ACCESS_PATHS)makePath(world,p.x1,p.z1,p.x2,p.z2,p.width,M.pavement);
-// Playground elements are matte low-poly forms built from shared geometry.
-const playgroundMat=material(0xcd975e), playBlue=material(0x509eb5), playRed=material(0xb75f52);
-block(world,5,1.4,5,-1,.7,0,playgroundMat);
-block(world,6,.4,6,-1,2.0,0,playRed);
-for(const [dx,dz] of [[-2,-2],[-2,2],[2,-2],[2,2]])block(world,.35,3.7,.35,-1+dx,3.6,dz,M.wood);
-// Slide, swings and sand without detailed physics or expensive effects.
-const slide=block(world,2.1,.2,6.3,4,1.2,4,playBlue);slide.rotation.x=-.27;
-for(const x of [12,17]){block(world,.28,3.6,.28,x,1.8,1.5,M.dark);block(world,.28,.18,1.6,x,2.45,2.7,M.wood)}
-block(world,7,.22,2.4,14.5,3.6,1.5,M.dark);
-flat(world,9,8,-14,4,.04,.055,material(0xcab98b));
-// Das Gelände ist absichtlich eben: keine holprige Physik am Hang.
-function instanced(parent,records,mat){
-  if(!records.length)return;
-  const mesh=new THREE.InstancedMesh(cube,mat,records.length);
-  const temp=new THREE.Object3D();
-  records.forEach((a,i)=>{
-    temp.position.set(a.x,a.y,a.z);temp.scale.set(a.w,a.h,a.d);
-    temp.rotation.set(0,0,0);temp.updateMatrix();mesh.setMatrixAt(i,temp.matrix);
-  });
-  mesh.instanceMatrix.needsUpdate=true;
-  mesh.frustumCulled=false;
-  parent.add(mesh);
-  return mesh;
+function noise(seed){let v=seed>>>0;return ()=>((v=(1664525*v+1013904223)>>>0)/4294967296)}
+function stipple(g,size,fill,seed,quantity,alpha=.1){
+ const rand=noise(seed);g.fillStyle=fill;
+ for(let i=0;i<quantity;i++){g.globalAlpha=alpha*(.3+rand());const x=rand()*size,y=rand()*size;
+ g.fillRect(x,y,rand()*2+.6,rand()*2+.6);}g.globalAlpha=1;
 }
-// Low-cost street markings only on the OUTER car road.
-const streetMarks=[];
-for(let x=-112;x<=112;x+=18){
- streetMarks.push({x,y:.059,z:-88,w:6,h:.015,d:.12});
- streetMarks.push({x,y:.059,z:88,w:6,h:.015,d:.12});
+const textures={
+ asphalt:canvasTexture((g,s)=>{g.fillStyle='#747775';g.fillRect(0,0,s,s);stipple(g,s,'#17232a',120,4500,.22);stipple(g,s,'#faf5e7',7,2500,.13);for(let i=0;i<12;i++){g.strokeStyle='#8c9190';g.globalAlpha=.1;g.lineWidth=.35;g.beginPath();g.moveTo(i*28-15,0);g.lineTo(i*28-7,s);g.stroke()}g.globalAlpha=1;},256,10,10),
+ cobble:canvasTexture((g,s)=>{g.fillStyle='#c8c5b9';g.fillRect(0,0,s,s);g.strokeStyle='#979b93';g.lineWidth=1.2;for(let y=0;y<s;y+=21){g.beginPath();g.moveTo(0,y);g.lineTo(s,y);g.stroke();for(let x=(y/21%2)*19;x<s;x+=38){g.beginPath();g.moveTo(x,y);g.lineTo(x,y+21);g.stroke()}}stipple(g,s,'#4d5a4d',23,900,.11)},256,7,7),
+ stucco:canvasTexture((g,s)=>{g.fillStyle='#fffaf0';g.fillRect(0,0,s,s);stipple(g,s,'#706d61',25,4500,.06);stipple(g,s,'#ffffff',17,3700,.09)},256,2,2),
+ brick:canvasTexture((g,s)=>{g.fillStyle='#bd8073';g.fillRect(0,0,s,s);g.lineWidth=3;g.strokeStyle='#e5c9b1';for(let y=0;y<s;y+=28){g.beginPath();g.moveTo(0,y);g.lineTo(s,y);g.stroke();for(let x=(y/28%2)*27;x<s;x+=54){g.beginPath();g.moveTo(x,y);g.lineTo(x,y+28);g.stroke()}}stipple(g,s,'#50382e',123,1800,.10)},256,2,2),
+ roof:canvasTexture((g,s)=>{g.fillStyle='#c2bdba';g.fillRect(0,0,s,s);g.strokeStyle='#686d71';g.lineWidth=1.7;for(let y=0;y<s;y+=19){g.beginPath();g.moveTo(0,y);g.lineTo(s,y);g.stroke();for(let x=(y/19%2)*19;x<s;x+=38){g.beginPath();g.moveTo(x,y);g.lineTo(x,y+19);g.stroke()}}stipple(g,s,'#343b43',44,900,.11)},256,3,3),
+ lawn:canvasTexture((g,s)=>{g.fillStyle='#b6c39c';g.fillRect(0,0,s,s);stipple(g,s,'#456d44',14,4600,.15);stipple(g,s,'#ecdf9d',78,1800,.13)},256,22,16),
+ wood:canvasTexture((g,s)=>{g.fillStyle='#e3c099';g.fillRect(0,0,s,s);g.strokeStyle='#7f5c3f';for(let x=0;x<s;x+=21){g.globalAlpha=.16;g.beginPath();g.moveTo(x,0);g.lineTo(x+3,s);g.stroke()}g.globalAlpha=1;stipple(g,s,'#613e2c',55,900,.08)},256,2,2)
+};
+const TX={
+ asphalt:new THREE.MeshStandardMaterial({map:textures.asphalt,color:0xffffff,roughness:1}),
+ cobble:new THREE.MeshStandardMaterial({map:textures.cobble,color:0xffffff,roughness:1}),
+ grass:new THREE.MeshStandardMaterial({map:textures.lawn,color:0xe8ffdd,roughness:1}),
+ sand:new THREE.MeshStandardMaterial({color:0xc9b38b,roughness:1}),
+ cedar:new THREE.MeshStandardMaterial({map:textures.wood,color:0xffffff,roughness:1}),
+ glass:new THREE.MeshStandardMaterial({color:0x83b5c9,roughness:.35,metalness:.08}),
+ roof:new THREE.MeshStandardMaterial({map:textures.roof,color:0xd6d6d4,roughness:1}),
+ pavement:new THREE.MeshStandardMaterial({color:0xb2b2a8,roughness:1}),
+ white:new THREE.MeshStandardMaterial({color:0xf7f3e8,roughness:1})
+};
+// Ground is one plane, no depth fighting or reflective asphalt.
+flat(world,322,259,0,0,-.10,.22,TX.grass);
+const ROAD_POINTS=[[-129,-108],[-47,-111],[67,-110],[131,-104],[136,-55],[136,40],[133,102],[65,112],[-56,113],[-129,105],[-137,47],[-137,-55]];
+function ribbon(parent,points,width,y,mat,closed=false){
+ const verts=[],uvs=[],indices=[];
+ const V=points.map(p=>new THREE.Vector3(p[0],0,p[1]));
+ const curve=new THREE.CatmullRomCurve3(V,closed,'centripetal',.4);
+ const samples=closed?Math.max(96,points.length*12):Math.max(8,points.length*10),L=curve.getLength();
+ for(let i=0;i<=samples;i++){
+  const t=i/samples, pt=curve.getPoint(t),dir=curve.getTangent(t), nx=-dir.z,nz=dir.x;
+  verts.push(pt.x+nx*width/2,y,pt.z+nz*width/2,pt.x-nx*width/2,y,pt.z-nz*width/2);
+  uvs.push(0,t*L/13,1,t*L/13);
+  if(i<samples){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2);}
+ }
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
+ const m=new THREE.Mesh(geo,mat);m.material.side=THREE.DoubleSide;parent.add(m);return m;
 }
-instanced(world,streetMarks,M.line);
+// Raised sidewalks and curb edges are DIFFERENT heights from the car road.
+ribbon(world,ROAD_POINTS,18,.011,TX.cobble,true);
+ribbon(world,ROAD_POINTS,12,.035,TX.asphalt,true);
+// Paint short centreline dashes along the outer road only.
+function roadMarkings(){
+ const curve=new THREE.CatmullRomCurve3(ROAD_POINTS.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal',.4);
+ for(let i=0;i<36;i++){
+  const p=curve.getPoint((i+.12)/36),d=curve.getTangent((i+.12)/36);
+  const m=flat(world,.16,3.6,p.x,p.z,.057,.009,M.line);
+  m.rotation.y=Math.atan2(-d.z,d.x);
+ }
+}roadMarkings();
+const OUTER_ROAD=[{x:0,z:-110,w:265,d:12},{x:0,z:110,w:265,d:12},{x:-132,z:0,w:12,d:208},{x:132,z:0,w:12,d:208}];
+// A BIG, inner playground. This is NOT a car roundabout.
+const playground={x:0,z:0,rx:49,rz:36};
+const grassPatch=new THREE.Mesh(new THREE.CircleGeometry(1,80),TX.grass);
+grassPatch.rotation.x=-Math.PI/2;grassPatch.scale.set(playground.rx,playground.rz,1);grassPatch.position.y=.026;world.add(grassPatch);
+const ACCESS_PATHS=[{x1:-25,z1:93,x2:-24,z2:29,width:3.3},{x1:24,z1:-93,x2:24,z2:-31,width:3.3}];
+function makePath(parent,x1,z1,x2,z2,width,mat,y=.074){
+ const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz);const s=flat(parent,width,len,(x1+x2)/2,(z1+z2)/2,y,.036,mat);
+ s.rotation.y=Math.atan2(dx,dz);return s;
+}
+for(const p of ACCESS_PATHS)makePath(world,p.x1,p.z1,p.x2,p.z2,p.width,TX.cobble);
+// Park footpaths connect zones without making an unnatural round road.
+for(const [a,b,c,d,w] of [[-42,-2,40,-2,2.5],[-27,-17,-16,27,2.1],[16,-30,31,24,2.1]])
+ makePath(world,a,b,c,d,w,TX.cobble,.067);
+// Symmetrical playground equipment; clear zones and sensible grouping.
+function cylinder(parent,r1,r2,h,x,y,z,mat,sides=9){
+ const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,sides),mat);m.position.set(x,y,z);parent.add(m);return m;
+}
+function beam(parent,x1,y1,z1,x2,y2,z2,r,mat){
+ const a=new THREE.Vector3(x1,y1,z1),b=new THREE.Vector3(x2,y2,z2),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,a.distanceTo(b),9),mat);
+ m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.sub(a).normalize());parent.add(m);return m;
+}
+const playWood=material(0xb58c5b),playBlue=material(0x3b8faf),playRed=material(0xbf624e),rope=material(0xa49c83);
+function disk(x,z,rx,rz,color){const m=new THREE.Mesh(new THREE.CircleGeometry(1,48),color);m.rotation.x=-Math.PI/2;m.scale.set(rx,rz,1);m.position.set(x,.053,z);world.add(m)}
+// Main wooden climbing tower and slides grouped in the centre, not scattered randomly.
+disk(0,0,23,18,TX.sand);
+for(const [x,z] of [[-8,-4],[-8,4],[0,-4],[0,4]])cylinder(world,.20,.26,4.5,x,2.25,z,playWood);
+flat(world,8,8,-4,0,2.5,.3,TX.cedar);
+const roofTower=new THREE.Mesh(new THREE.ConeGeometry(6.3,2.8,4),TX.roof);roofTower.rotation.y=Math.PI/4;roofTower.position.set(-4,6.7,0);world.add(roofTower);
+for(const [x1,z1,x2,z2] of [[-8,-4,0,-4],[-8,4,0,4],[-8,-4,-8,4]])beam(world,x1,4.4,z1,x2,4.4,z2,.13,playWood);
+// Clearly angled slide with a lip at the lower end.
+const chute=block(world,2.5,.19,7.4,-4,1.39,8.4,playBlue);chute.rotation.x=.36;
+for(const dx of [-1.26,1.26]){const rail=block(world,.17,.47,7.5,-4+dx,1.7,8.4,playBlue);rail.rotation.x=.36;}
+for(let i=0;i<5;i++){block(world,3.2,.18,.18,-4,.4+i*.42,-5.8-i*.8,playWood)}
+// Swings side-by-side in one fenced zone.
+disk(27,3,14,13,TX.sand);
+for(const cx of [23,30]){
+ beam(world,cx-2,0,0,cx-1.25,4.8,0,.15,playWood);
+ beam(world,cx+2,0,0,cx+1.25,4.8,0,.15,playWood);
+ beam(world,cx-1.25,4.8,0,cx+1.25,4.8,0,.16,playWood);
+ for(const d of [-.75,.75])beam(world,cx+d,4.8,.05,cx+d,1.5,.05,.035,rope);
+ block(world,1.8,.13,.54,cx,1.35,.05,playRed);
+}
+// Sandbox and stepping stones in the small children's zone.
+disk(-29,2,11.5,10,TX.sand);
+block(world,12,.33,9,-29,.20,2,TX.cedar);
+flat(world,11.2,8.2,-29,2,.39,.06,TX.sand);
+for(const x of [-34.5,-23.5])for(const z of [-1.9,5.9])cylinder(world,.27,.27,.5,x,.28,z,playWood);
+// A few deliberately located benches near paths; no random boxes.
+function bench(x,z,r=0){
+ const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=r;world.add(g);
+ block(g,3,.2,.77,0,.78,0,TX.cedar);block(g,3,.85,.17,0,1.28,-.38,TX.cedar);
+ for(const s of [-1.15,1.15]){block(g,.16,.82,.18,s,.41,0,material(0x434c4a));}
+}
+for(const p of [[-41,22,.20],[40,22,-.6],[-41,-23,1.2],[9,-29,-.1]])bench(...p);
+// Small playground information board at the southern access.
+block(world,1.5,2.15,.22,24,1.28,-39,TX.cedar);
+const info=textSign(world,'SPIELPLATZ',24,2.65,-39.15,4.0);
+// Forged curved landscape and hills at distance, but all WALKABLE ground stays flat for smooth collision.
+const horizon=material(0x6e8e78);
+function hill(cx,cz,rx,rz,height,tint){
+ const mat=material(tint),mesh=new THREE.Mesh(new THREE.ConeGeometry(rx,height,7),mat);
+ mesh.position.set(cx,height*.25,cz);mesh.scale.z=rz/rx;world.add(mesh);
+}
+for(const h of [[-210,-210,130,95,32,0x749279],[-65,-243,170,120,44,0x65846a],[190,-223,140,86,26,0x7a997b],[-230,120,110,70,24,0x758f6e],[250,100,160,80,34,0x759378]])hill(...h);
+// Fine grass silhouettes & clusters confined to the playground and outer lots.
+const instanced=(parent,records,mat)=>{
+ if(!records.length)return;
+ const mesh=new THREE.InstancedMesh(cube,mat,records.length);const obj=new THREE.Object3D();
+ records.forEach((r,i)=>{obj.position.set(r.x,r.y,r.z);obj.scale.set(r.w,r.h,r.d);obj.rotation.set(0,0,0);obj.updateMatrix();mesh.setMatrixAt(i,obj.matrix)});
+ mesh.instanceMatrix.needsUpdate=true;mesh.frustumCulled=false;parent.add(mesh);return mesh;
+};
 
 // ── City architecture ────────────────────────────────────────────────
 const buildings=[];
@@ -188,110 +263,176 @@ function random(){rngState=(1664525*rngState+1013904223)>>>0;return rngState/429
 function choose(array){return array[Math.floor(random()*array.length)];}
 
 const profiles={
-  apartment:{wall:0x9dabae,accent:0xbeb4a3,roof:0x485969,sign:'WOHNHAUS',style:'home'},
-  radio:{wall:0x7894a7,accent:0xe8ad6a,roof:0x3c5769,sign:'RADIO VEGA',style:'shop'},
-  market:{wall:0xad8d7c,accent:0xc4bd96,roof:0x6d534a,sign:'MARKT',style:'market'},
-  archive:{wall:0x939aaf,accent:0xdac4aa,roof:0x536175,sign:'ARCHIV',style:'office'},
-  aurora:{wall:0x6e889b,accent:0xb7dbd7,roof:0x2a5369,sign:'AURORA',style:'lab'},
-  station:{wall:0x9b9da2,accent:0xd8bea2,roof:0x5b6270,sign:'BAHNHOF',style:'station'},
-  bakery:{wall:0xd0ac85,accent:0xd9e1bb,roof:0x64534c,sign:'CAFÉ LUNA',style:'cafe'},
-  ordinaryA:{wall:0xa5b1ae,accent:0xe4c99b,roof:0x677177,sign:'',style:'home'},
-  ordinaryB:{wall:0x94a7b0,accent:0xd8c9c2,roof:0x576574,sign:'',style:'home'},
-  ordinaryC:{wall:0xc2a9a3,accent:0xe5d1ba,roof:0x78676b,sign:'',style:'shop'},
-  ordinaryD:{wall:0xb0ba9b,accent:0xd3b47d,roof:0x647568,sign:'',style:'home'},
-  ordinaryE:{wall:0x8f9aab,accent:0xe0bfb0,roof:0x4b596f,sign:'',style:'office'}
+ apartment:{wall:0xf1e9d9,accent:0xd4d0c8,roof:0x51535b,sign:'STEFANS ZUHAUSE',style:'home'},
+ radio:{wall:0xd3e0dc,accent:0x97afa8,roof:0x535e62,sign:'RADIO VEGA',style:'shop'},
+ market:{wall:0xe5d8c8,accent:0x9cb1a0,roof:0x6c5352,sign:'MARKT',style:'market'},
+ archive:{wall:0xeee9d9,accent:0xc6c0af,roof:0x6b6668,sign:'ARCHIV',style:'office'},
+ aurora:{wall:0xb6c8c3,accent:0xb8d0c9,roof:0x555e68,sign:'AURORA',style:'lab'},
+ station:{wall:0xeee5d4,accent:0xb8b2a5,roof:0x555f65,sign:'BAHNHOF',style:'station'},
+ bakery:{wall:0xffead2,accent:0xc29f7f,roof:0x895f51,sign:'CAFÉ LUNA',style:'cafe'},
+ ordinaryA:{wall:0xe8e1d5,accent:0xf0e5d2,roof:0x525c61,sign:'',style:'home'},
+ ordinaryB:{wall:0xf3d2c1,accent:0xe9ccb9,roof:0x865552,sign:'',style:'home'},
+ ordinaryC:{wall:0xd0d9d0,accent:0xc2cabf,roof:0x545d58,sign:'',style:'home'},
+ ordinaryD:{wall:0xf5ecda,accent:0xe6d9c0,roof:0x76685a,sign:'',style:'home'},
+ ordinaryE:{wall:0xd6dce5,accent:0xbbc7d5,roof:0x515d73,sign:'',style:'home'}
 };
-const houses = new Map();
-function addBuilding(id,x,z,w,d,h,profileName,label=''){
-  const spec=profiles[profileName],group=new THREE.Group();
-  const facade=material(spec.wall),accent=material(spec.accent),roof=material(spec.roof);
-  world.add(group);
-  // Core shape: layered facades and colored ground-floor storefronts.
-  block(group,w,h-5.3,d,x,(h+5.3)/2,z,facade);
-  block(group,w,5.15,d,x,2.575,z,accent);
-  block(group,w+.5,.75,d+.5,x,h+.38,z,roof);
-  if(spec.style==='home'){
-    // Two gabled roof slopes for residential silhouettes.
-    const leftRoof=block(group,w*.57,.38,d+1,x-w*.235,h+1.32,z,roof);
-    const rightRoof=block(group,w*.57,.38,d+1,x+w*.235,h+1.32,z,roof);
-    leftRoof.rotation.z=.25;rightRoof.rotation.z=-.25;
-  }
-  block(group,w+.1,.4,d+.1,x,5.4,z,roof);
-  // Door visually distinct and on walkable side facing the positive-Z street.
-  const front=z+d/2;
-  block(group,2.7,3.7,.12,x,1.9,front+.18,M.door);
-  block(group,2.95,.27,.35,x,3.92,front+.30,roof);
-  block(group,.2,3.6,.20,x-1.35,1.9,front+.28,roof);
-  block(group,.2,3.6,.20,x+1.35,1.9,front+.28,roof);
-  block(group,.1,.45,.10,x+.96,1.8,front+.27,M.golden);
-  if(spec.style==='shop'||spec.style==='cafe'||spec.style==='market'){
-    block(group,w*.85,.55,1.5,x,4.75,front+1.1,material(spec.accent));
-    block(group,2.6,2.4,.13,x-3.3,2,front+.17,M.skyWindow);
-  }
-  if(spec.style==='lab'){
-    for(const side of [-1,1])block(group,1.3,h,1.6,x+side*(w/2-1),h/2,front+.3,M.dark);
-  }
-  if(label||spec.sign)textSign(group,label||spec.sign,x,5.75,front+.26,Math.min(w-2,9));
-  // All windows instanced globally with alternating warm/cool colors.
-  for(let floor=1;floor<Math.floor((h-1)/4);floor++){
-    for(let col=-w/2+2;col<w/2-1;col+=3.5){
-      if(floor===1 && Math.abs(col)<2)continue; // no window on the door
-      const rec={x:x+col,y:floor*4,z:front+.09,w:1.35,h:1.65,d:.08};
-      (random()<.37?windowsBright:windowsDark).push(rec);
-      const back={...rec,z:z-d/2-.09};(random()<.32?windowsBright:windowsDark).push(back);
-    }
-    for(let zz=-d/2+2;zz<d/2-1;zz+=3.8){
-      const rec={x:x+w/2+.09,y:floor*4,z:z+zz,w:.08,h:1.55,d:1.4};
-      windowsDark.push(rec);
-    }
-  }
-  const door={x,z:front+1.8};
-  const building={id,x,z,w,d,h,label:label||spec.sign||'Gebäude',profileName,door,group};
-  buildings.push(building);houses.set(id,building);
-  exteriorInteractions.push({type:'door',name:`${building.label} betreten`,x:door.x,z:door.z,buildingId:id});
-  return building;
+const houses=new Map();
+const facadeMat=new Map(),roofMat=new Map();
+function facade(color){if(!facadeMat.has(color))facadeMat.set(color,new THREE.MeshStandardMaterial({map:textures.stucco,color,roughness:1}));return facadeMat.get(color);}
+function tiles(color){if(!roofMat.has(color))roofMat.set(color,new THREE.MeshStandardMaterial({map:textures.roof,color,roughness:1,side:THREE.DoubleSide}));return roofMat.get(color);}
+function houseRoof(parent,x,z,w,d,h,color){
+ // A REAL pitch roof: two sloped roof surfaces + triangular gables, not two fake boxes.
+ const e=.62, ridge=h+3.0, edge=h+.25, left=x-w/2-e,right=x+w/2+e,front=z+d/2+e,back=z-d/2-e;
+ const positions=[left,edge,front, right,edge,front, x,ridge,front,
+                  left,edge,back, x,ridge,back, right,edge,back];
+ const idx=[0,1,2, 3,4,5, 0,2,3, 2,4,3, 2,1,5, 2,5,4];
+ // Explicitly build two sloped quads and two gable triangles.
+ const verts=[left,edge,front, x,ridge,front, left,edge,back, x,ridge,back,
+               x,ridge,front,right,edge,front,x,ridge,back,right,edge,back];
+ const uv=[0,0,1,0,0,1,1,1, 0,0,1,0,0,1,1,1];
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geometry.setIndex([0,1,2,2,1,3,4,5,6,6,5,7]);geometry.computeVertexNormals();
+ parent.add(new THREE.Mesh(geometry,tiles(color)));
+ // Triangular gables front and back, pitched edge.
+ for(const zz of [z-d/2-.015,z+d/2+.015]){
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute([x-w/2,edge,zz,x+w/2,edge,zz,x,ridge-.15,zz],3));geo.computeVertexNormals();
+  parent.add(new THREE.Mesh(geo,facade(0xe3d9cd)));
+ }
+ // Chimneys only on some roofs; tactile tiles and softly dark metal gutters.
+ block(parent,w+1,.13,.13,x,edge-.08,front,material(0x5a5555));
+ block(parent,w+1,.13,.13,x,edge-.08,back,material(0x5a5555));
 }
-// Preserve the same important building IDs, profiles and interactable interiors.
-// Compact suburban lots around the OUTER road, away from the central playground.
-addBuilding('apartment',-76,40,17,15,12,'apartment');
-addBuilding('radio',-76,-45,19,15,14,'radio');
-addBuilding('market',41,-54,17,14,12,'market');
-addBuilding('archive',81,-48,20,17,16,'archive');
-addBuilding('aurora',83,38,21,17,18,'aurora');
-addBuilding('station',-94,48,17,15,12,'station');
-addBuilding('bakery',51,38,17,14,12,'bakery');
-// Small individual houses: several silhouettes, no endless copy-pasted grid.
+function windowModule(parent,x,y,z,side=false,shutters=false){
+ const window=TX.glass,trim=TX.white,dark=material(0x404e51);
+ if(!side){
+  block(parent,1.6,2.0,.09,x,y,z,trim);
+  block(parent,1.35,1.75,.115,x,y,z+.09,window);
+  block(parent,.075,1.8,.14,x,y,z+.16,trim);
+  block(parent,1.4,.072,.13,x,y,z+.16,trim);
+  block(parent,1.95,.15,.33,x,y-1.0,z+.16,material(0xc4c2b5));
+  if(shutters){block(parent,.33,1.9,.11,x-1,y,z+.12,material(0x76928a));block(parent,.33,1.9,.11,x+1,y,z+.12,material(0x76928a));}
+ }else{
+  block(parent,.09,2.0,1.6,x,y,z,trim);
+  block(parent,.13,1.75,1.35,x+.07,y,z,window);
+  block(parent,.14,1.80,.07,x+.14,y,z,trim);
+  block(parent,.13,.07,1.44,x+.14,y,z,trim);
+ }
+}
+function addBuilding(id,x,z,w,d,h,profileName,label=''){
+ const spec=profiles[profileName],group=new THREE.Group(); world.add(group);
+ const isHome=spec.style==='home'||['cafe','market'].includes(spec.style);
+ // Real proportions: height ~7–10 m, pitched roofs, multiple facade details.
+ const front=z+d/2;
+ const wall=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),facade(spec.wall));wall.position.set(x,h/2,z);group.add(wall);
+ // Foundation, base trim, lintels and secondary volumes.
+ block(group,w+.38,.48,d+.40,x,.24,z,material(0xb0aaa1));
+ block(group,w+.30,.17,d+.35,x,h-.18,z,material(0xe8e3d9));
+ if(isHome)houseRoof(group,x,z,w,d,h,spec.roof);
+ else{
+  flat(group,w+1,d+1,x,z,h+.24,.48,tiles(spec.roof));
+  block(group,w+.65,.24,.38,x,h+.28,front+.24,material(0xc5b7a6));
+ }
+ // Make the front facade a recognisable German residential front door.
+ const doorOffset=isHome?1.1:0;
+ const doorX=x+doorOffset;
+ block(group,2.0,3.0,.13,doorX,1.7,front+.09,material(0x596c65));
+ block(group,2.18,3.20,.14,doorX,1.74,front+.06,material(0xf5eee1));
+ block(group,1.83,2.85,.17,doorX,1.70,front+.17,material(isHome?0x678377:0x667786));
+ block(group,.10,.42,.17,doorX+.63,1.75,front+.27,M.golden);
+ block(group,2.4,.12,.8,doorX,.065,front+.65,TX.cobble);
+ if(isHome){
+  // Garage and driveway fitted to the left; no fake holes in walls.
+  const gar=block(group,4.0,3.1,3.9,x-w/2+1.7,1.55,z+d/2+1.20,material(0xe9e4d7));
+  block(group,3.45,2.43,.13,x-w/2+1.7,1.29,z+d/2+3.20,material(0xc8caca));
+  for(const d of [-.75,0,.75])block(group,3.32,.035,.16,x-w/2+1.7,1.05+d,z+d/2+3.30,material(0x9ba8ab));
+  flat(world,4.45,7.3,x-w/2+1.7,z+d/2+7.3,.055,.055,TX.cobble);
+ }
+ // Windows, including on the street side and side facades, with physical white frames.
+ for(const zz of [front+.04,z-d/2-.04]){
+  const flip=zz<z;
+  for(const ix of [-1,1]){
+    const wx=x+ix*w*.31;
+    windowModule(group,wx,2.15,zz+(flip?-.09:.09),false,isHome && (id.length%2===0));
+    if(h>8.5)windowModule(group,wx,5.55,zz+(flip?-.09:.09),false);
+  }
+ }
+ for(const side of [-1,1]){
+   for(const zz of [z-2.65,z+2.65])windowModule(group,x+side*(w/2+.08),4.5,zz,true);
+ }
+ // Rooftop dormers and shrubs connect the house more to the natural world.
+ if(isHome && id.length%3===1){
+   const dormer=block(group,2.2,1.45,1.2,x-w*.18,h+1.05,front-2.2,facade(spec.wall));
+   block(group,1.2,.95,.06,x-w*.18,h+1.12,front-1.54,TX.glass);
+   flat(group,2.65,1.6,x-w*.18,front-2.2,h+1.84,.12,tiles(spec.roof));
+ }
+ if(['shop','market','cafe'].includes(spec.style)){
+   block(group,w*.70,.16,1.9,x,3.8,front+1.0,material(0x937968));
+ }
+ if(label||spec.sign)textSign(group,label||spec.sign,x,3.55,front+.35,Math.min(w*.70,8.3));
+ const door={x:doorX,z:front+2.3};
+ const b={id,x,z,w,d,h,label:label||spec.sign||'Wohnhaus',profileName,door,group};
+ buildings.push(b);houses.set(id,b);
+ exteriorInteractions.push({type:'door',name:`${b.label} betreten`,x:door.x,z:door.z,buildingId:id});
+ return b;
+}
+// Seven important locations retain their IDs and all related dialogs & interiors.
+addBuilding('apartment',-75,48,14,11,8.2,'apartment');
+addBuilding('radio',-75,-60,19,13,9.0,'radio');
+addBuilding('market',45,-65,16,12,8.3,'market');
+addBuilding('archive',84,-54,20,14,10.5,'archive');
+addBuilding('aurora',85,48,20,14,10.5,'aurora');
+addBuilding('station',-100,47,18,13,9.1,'station');
+addBuilding('bakery',48,49,17,12,8.3,'bakery');
+// Ring of DIFFERENT pitched-roof houses, set outside playground and paths.
 const ordinaryLots=[
- [-101,-66,15,13],[-52,-68,14,13],[-32,-67,14,13],[5,-67,14,13],
- [63,-69,15,13],[99,-69,14,13],[-101,-18,15,14],[-101,12,14,13],
- [104,-18,15,13],[105,9,14,14],[-57,57,14,13],[-38,58,14,13],
- [35,57,14,13],[66,64,14,13],[103,60,14,14]
+ [-114,-78,14,12],[-89,-84,14,12],[-51,-85,15,12],[-5,-84,14,12],
+ [58,-86,15,12],[101,-86,14,12],[-110,-16,14,13],[-110,15,14,13],
+ [110,-23,13,12],[111,17,14,12],[-46,71,15,12],[-7,77,14,12],
+ [29,75,14,12],[68,79,14,12],[103,78,15,12]
 ];
 ordinaryLots.forEach(([x,z,w,d],i)=>{
- const h=9.5+(i%4)*1.2;
- const p=['ordinaryA','ordinaryB','ordinaryD','ordinaryC','ordinaryE'][i%5];
- addBuilding(`house${i+1}`,x,z,w,d,h,p);
+  const height=7.7+(i%3)*.55;
+  const p=['ordinaryA','ordinaryB','ordinaryD','ordinaryC','ordinaryE'][i%5];
+  addBuilding(`house${i+1}`,x,z,w,d,height,p);
 });
-instanced(world,windowsBright,M.skyWindow);
-instanced(world,windowsDark,M.windowDark);
-
-function tree(x,z,scale=1){
-  block(world,.68*scale,3.2*scale,.68*scale,x,1.6*scale,z,M.trunk);
-  const top=new THREE.Mesh(new THREE.IcosahedronGeometry(2.15*scale,0),M.leaf);
-  top.position.set(x,4.4*scale,z);world.add(top);
+// Ground-floor planted gardens and modest hedges, intentionally outside paths.
+const woodFence=material(0x987e61),hedge=material(0x6e9c5d);
+const noObstacle=[];
+function shrub(x,z,s=1){
+ const mesh=new THREE.Mesh(new THREE.IcosahedronGeometry(.80*s,1),material(0x598756));
+ mesh.scale.set(1,.77,1);mesh.position.set(x,.65*s,z);world.add(mesh);
 }
-for(const [x,z] of [[-41,-27],[-40,27],[39,-25],[40,27],[-31,4],[31,4],
- [-107,42],[-65,73],[72,75],[-105,-44],[105,-42],[-44,-45],[48,-36],
- [4,39],[-5,-36],[92,15],[-93,30]])tree(x,z,.73);
-// Simple benches and low garden walls; houses and doors have real collision.
-for(const [x,z] of [[-27,14],[28,13],[-24,-16]]){
- block(world,3,.2,.8,x,1.22,z,M.wood);
- for(const dx of [-1.1,1.1])block(world,.18,1.2,.18,x+dx,.6,z,M.dark);
+function tree(x,z,s=1){
+ // Soft shaded, more organic 3-piece canopy instead of a single icosahedron.
+ cylinder(world,.15*s,.28*s,3.8*s,x,1.9*s,z,material(0x715946),8);
+ for(const [dx,dy,dz,sc,c] of [[0,4.8,0,1.85,0x699a60],[-1.1,4.35,.3,1.48,0x719f66],[1.1,4.15,-.4,1.45,0x4f875c]]){
+  const m=new THREE.Mesh(new THREE.IcosahedronGeometry(sc*s,1),material(c));m.position.set(x+dx*s,dy*s,z+dz*s);world.add(m);
+ }
 }
-for(const [x,z] of [[-105,78],[-62,-80],[55,77],[108,-80]]){
- block(world,.25,5.2,.25,x,2.6,z,M.lamp);
- block(world,1.1,.22,.55,x,5.25,z,M.lampFace);
+// Plant fixed groups, no clutter in road / front of NPCs / two access paths.
+const treeLocations=[[-42,-38,1.1],[-39,26,1.0],[43,-25,1.0],[41,29,1.15],[-34,-15,.8],[-3,31,.85],[36,15,.9],
+ [-91,74,.9],[-57,52,.9],[70,55,.9],[-105,-50,.95],[102,-53,.9],[-44,-63,.8],[48,-40,.8],
+ [0,-44,.8],[-53,0,1.0],[56,0,1.1],[95,8,.9],[-94,12,.9],[-16,3,.67]];
+for(const [x,z,s] of treeLocations)tree(x,z,s);
+for(const [x,z] of [[-48,37],[-51,25],[52,21],[54,32],[-54,-16],[54,-11],[-45,-23],[-18,42],[32,-45],[-53,58],[79,66]])shrub(x,z,.95);
+// Park boundary as low mixed hedges, with clear breaks where access paths begin.
+for(let i=0;i<52;i++){
+  const a=i*Math.PI*2/52,x=54*Math.cos(a),z=41*Math.sin(a);
+  if((z>31 && x<-10&&x>-36)||(z<-31&&x>10&&x<35))continue;
+  if(i%2===0)shrub(x,z,.65);
 }
+// Garden frontage hedges away from entrances.
+for(const [x,z,w] of [[-107,55,9],[-58,62,8],[101,60,8],[69,-68,7],[-104,-65,7]]){
+  block(world,w,1.0,.72,x,.58,z,hedge);
+}
+// Street lights with warm bulb models, not expensive per-object light sources.
+function lantern(x,z){
+ cylinder(world,.11,.14,5.5,x,2.75,z,material(0x464b4f),10);
+ block(world,1.15,.14,.22,x+.54,5.45,z,material(0x50575c));
+ const bulb=new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),new THREE.MeshBasicMaterial({color:0xffe1a1}));bulb.position.set(x+1.0,5.27,z);world.add(bulb);
+}
+for(const p of [[-122,71],[-120,-60],[-58,100],[55,-100],[119,75],[120,-71],[60,99],[-55,-99]])lantern(...p);
+// Park signs and an intentional viewpoint toward the distant hills.
+textSign(world,'KUSELWIES',-120,3,91,6.8);
 
 // ── People: lightweight block figures ────────────────────────────────
 function person(color,faceColor=M.skin){
@@ -299,6 +440,7 @@ function person(color,faceColor=M.skin){
   block(torso,1.18,1.5,.72,0,2.35,0,material(color));
   block(torso,.9,.92,.84,0,3.6,0,faceColor);
   block(torso,.96,.22,.86,0,4.15,-.01,M.hair);
+  block(torso,.68,.92,.29,0,2.4,-.50,material(0x454b46)); // backpack
   block(torso,.12,.12,.04,-.20,3.65,.435,M.hair);
   block(torso,.12,.12,.04,.20,3.65,.435,M.hair);
   const arms=[],legs=[];
@@ -321,23 +463,20 @@ function npc(name,x,z,color,role,requires=null){
   cityNPCs.push({figure,mark,name,x,z,role,requires});
   exteriorInteractions.push({type:'npc',name:`Mit ${name} sprechen`,x,z,role,requires});
 }
-npc('Melanie',-76,59,0x9c5367,'mara');
-npc('Nico',42,-35,0x39917f,'tarek');
-npc('Agnes',81,-27,0x9176af,'nora');
-npc('Dr. Patrick',83,59,0x476e9f,'vale');
-npc('Rudi',-94,65,0x9b824e,'station');
-npc('Alwin',51,56,0xad7168,'jun');
-// Stadtwerke-Auszubildender mit einer optionalen Stadtmission.
-npc('Benny',8,38,0x4d718c,'benni');
-// Weitere Verwandte der großen Familie: eigene Arbeit, eigene Dialoge.
-npc('Annika',55,53,0xb27991,'annika'); // Floristin, bei Café Luna
-npc('Tobi',-10,-31,0x7488ae,'tobi'); // Paketbote, beim Park
-// Leon taucht erst nach der Hauptgeschichte auf: sein Verschwinden bleibt ein Rätsel.
-npc('Leon',-76,-27,0x567d9f,'leo','report');
-// Messkasten steht außerhalb von Häusern an der Parkkante.
-block(world,1.1,2.05,.78,7,1.025,36,M.lamp);
-block(world,.72,.6,.10,7,1.55,36.44,M.skyWindow);
-exteriorInteractions.push({type:'object',name:'Messkasten prüfen',x:7,z:36,role:'powerBox'});
+npc('Melanie',-75,64,0x9c5367,'mara');
+npc('Nico',45,-46,0x39917f,'tarek');
+npc('Agnes',84,-36,0x9176af,'nora');
+npc('Dr. Patrick',85,67,0x476e9f,'vale');
+npc('Rudi',-100,65,0x9b824e,'station');
+npc('Alwin',48,67,0xad7168,'jun');
+npc('Benny',8,44,0x4d718c,'benni');
+npc('Annika',56,68,0xb27991,'annika');
+npc('Tobi',-11,-45,0x7488ae,'tobi');
+npc('Leon',-75,-42,0x567d9f,'leo','report');
+// One believable power distribution box at park border, not random clutter.
+block(world,1.1,1.9,.70,8,.95,42,M.lamp);
+block(world,.8,.44,.12,8,1.42,42.4,M.skyWindow);
+exteriorInteractions.push({type:'object',name:'Messkasten prüfen',x:8,z:42,role:'powerBox'});
 
 // ── Room builder: a real walkable 3D interior for EVERY house ────────
 let currentBuilding=null, outsideReturn=null;
@@ -409,9 +548,9 @@ function makeRoom(building){
 }
 
 // ── Save system: same storage key as previous 3D version ────────────
-const SAVE_KEY='neonrift_kuselwies_preview_1';
+const SAVE_KEY='neonrift_kuselwies_hd_v13';
 const startingSave={
-  schema:3, x:-76,z:62, inside:'apartment',metMara:false,metTarek:false,
+  schema:3, x:-75,z:66, inside:'apartment',metMara:false,metTarek:false,
   metNora:false,metVale:false,metStation:false,metJun:false,metStefan:false,metAnnika:false,metTobi:false,tobiEnvelope:false,metLeo:false,powerReadings:false,powerCompleted:false,
   listened:false,tape:false,frequency:false,decoded:false,report:false,
   foundPhone:false,plans:false,photo:false,ticket:false,station:false,
@@ -443,18 +582,18 @@ function persist(){
 }
 
 // ── Player and physics ───────────────────────────────────────────────
-const playerPos = new THREE.Vector3(-76,0,62);
+const playerPos = new THREE.Vector3(-75,0,66);
 const moveVel = new THREE.Vector2();
 let jumpVelocity=0,grounded=true,walking=0;
 const keys=Object.create(null);
 const joy={x:0,y:0};
-let yaw=.22,pitch=.18,camDistance=9.2;
+let yaw=.22,pitch=.20,camDistance=9.7;
 let touchRun=false,started=false,dialogOpen=false,menuOpen=false;
 const camAnchor=new THREE.Vector3(),lookAnchor=new THREE.Vector3();
 let cameraReady=false;
 let nearest=null,toastTimeout=0,autosave=0,mapClock=0;
 function streetBlock(x,z,r=.58){
-  if(Math.abs(x)>MAP_LIMIT||Math.abs(z)>111)return true;
+  if(Math.abs(x)>MAP_LIMIT||Math.abs(z)>124)return true;
   for(const b of buildings){
     if(x>b.x-b.w/2-r&&x<b.x+b.w/2+r&&z>b.z-b.d/2-r&&z<b.z+b.d/2+r)return true;
   }
@@ -554,8 +693,8 @@ function exitBuilding(){
 if(save.inside && houses.has(save.inside))enterBuilding(save.inside,true);
 else{
   currentBuilding=null;
-  playerPos.set(Number(save.x) || -76,0,Number(save.z) || 62);
-  if(streetBlock(playerPos.x,playerPos.z))playerPos.set(-76,0,62);
+  playerPos.set(Number(save.x) || -75,0,Number(save.z) || 66);
+  if(streetBlock(playerPos.x,playerPos.z))playerPos.set(-75,0,66);
   hero.root.position.copy(playerPos);
 }
 
@@ -667,23 +806,23 @@ function speak(role){
       ]);
   }else if(role==='benni'){
     if (!save.metStefan){
-      sceneText('BENNI · STADTWERKE','Ein ungewöhnlicher Ausschlag',
+      sceneText('BENNY · STADTWERKE','Ein ungewöhnlicher Ausschlag',
         'Benny sitzt auf einer Bank am Park und faltet einen zerknitterten Messbericht. „Du kennst dich doch mit Technik aus? Seit zwei Tagen meldet ein Messkasten Stromspitzen, obwohl hier gar keine Leitung für so große Lasten verläuft.“\n\nEr blickt zu den Häusern. „Die Leute beschweren sich über flackernde Lampen. Ich möchte nur herausfinden, warum.“',[
           {label:'Ich sehe mir den Messkasten an.',run:()=>{save.metStefan=true;flash('Nebenauftrag: Messkasten am Park untersuchen.')}},
           {label:'Vielleicht später.',secondary:true}
         ]);
     } else if(save.powerReadings&&!save.powerCompleted){
-      sceneText('BENNI','Daten, die nicht hierhergehören',
+      sceneText('BENNY','Daten, die nicht hierhergehören',
         'Benny liest die Werte zweimal. „Da ist ein Impuls, der jede Nacht zur selben Minute auftaucht. Aber der Verbrauch hat kein Ziel. Das ist, als würde eine ganze Straße Strom ziehen, ohne dass irgendwo ein Licht angeht.“\n\nEr steckt den Bericht ein. „Ich frage morgen in der Stadtverwaltung nach. Danke für deine Hilfe.“',[
           {label:'Sag mir, wenn du etwas findest.',run:()=>{save.powerCompleted=true;flash('Nebenauftrag abgeschlossen · Benny forscht weiter.')}}
         ]);
     } else if(save.powerCompleted){
-      sceneText('BENNI','Keine Antwort von der Stadt',
+      sceneText('BENNY','Keine Antwort von der Stadt',
         '„Die Verwaltung behauptet, unsere Geräte seien defekt. Seltsam nur, dass sie heute sämtliche Messprotokolle abgeholt hat.“ Benny lässt seinen Blick über die Straße wandern. „Ich behalte die Sache im Auge.“',[
           {label:'Bleib vorsichtig.'}
         ]);
     } else {
-      sceneText('BENNI','Der graue Kasten',
+      sceneText('BENNY','Der graue Kasten',
         '„Direkt neben dem Park. Grauer Stromkasten, blauer Aufkleber. Schreib dir die Messwerte auf, bevor jemand die Sicherung herausnimmt.“',[
           {label:'Ich sehe nach.'}
         ]);
@@ -721,9 +860,9 @@ function speak(role){
         {label:'Was ist unter dem Bahnhof?',run:()=>{save.metLeo=true;sceneText('LEON','Kein Licht am Ende','„Da unten haben die Uhren aufgehört zu laufen. Mehr weiß ich nicht. Vielleicht ist es besser so.“',[{label:'Ich werde nachforschen.'}])}}
       ]);
   }else if(role==='jun'){
-    sceneText('ALVIN · CAFÉ LUNA','Ein seltsamer Gast',
+    sceneText('ALWIN · CAFÉ LUNA','Ein seltsamer Gast',
       '„Annika hilft heute bei der Floristin aus. Ich wollte sie eigentlich fragen, ob wir unser Leben gemeinsam planen wollen“, sagt Alwin und lächelt verlegen. „Den richtigen Moment für die Verlobung suche ich noch.“\n\n„Leon? Klar kenne ich ihn. Er trank jeden Donnerstag Tee, obwohl er Tee hasste. Letzte Woche hat er plötzlich das Glas abgestellt und gesagt: ,Ich glaube, wir sind schon einmal hier gewesen.‘“',[
-        {label:'Hat er noch etwas gesagt?',run:()=>{save.metJun=true;sceneText('ALVIN','Eine Erinnerung','„Er hat nach einer alten Fotografie gefragt. Angeblich hing sie mal an der Wand der Markthalle. Ich habe ihm gesagt, dass das Gebäude erst zwölf Jahre alt ist.“',[{label:'Seltsam.'}])}},
+        {label:'Hat er noch etwas gesagt?',run:()=>{save.metJun=true;sceneText('ALWIN','Eine Erinnerung','„Er hat nach einer alten Fotografie gefragt. Angeblich hing sie mal an der Wand der Markthalle. Ich habe ihm gesagt, dass das Gebäude erst zwölf Jahre alt ist.“',[{label:'Seltsam.'}])}},
         {label:'Danke.',run:()=>{save.metJun=true}}
       ]);
   }
@@ -854,6 +993,7 @@ function journal(){
 $('menuBtn').onclick=()=>{if(!started||dialogOpen)return;menuOpen=true;$('menu').hidden=false;journal()};
 $('closeMenu').onclick=()=>{menuOpen=false;$('menu').hidden=true};
 $('resetSave').onclick=()=>{if(confirm('Nur den BAUMHOLDER-3D-Spielstand wirklich löschen und von vorne anfangen?')){localStorage.removeItem(SAVE_KEY);location.reload()}};
+$('qualityBtn').textContent='Grafik: '+(quality==='high'?'Hoch':'Auto');
 $('qualityBtn').onclick=()=>{
   quality=quality==='auto'?'low':quality==='low'?'high':'auto';
   $('qualityBtn').textContent='Grafik: '+({auto:'Auto',low:'Schnell',high:'Hoch'})[quality];
@@ -991,13 +1131,13 @@ function frame(t){
       if(slowIntervals>=2 && current>.57){
         renderer.setPixelRatio(Math.max(.56,+(current-.12).toFixed(2)));
         renderer.setSize(innerWidth,innerHeight);slowIntervals=0;fastIntervals=0;
-      }else if(fastIntervals>=4 && current<(mobile?.82:1.0)){
-        renderer.setPixelRatio(Math.min(mobile?.82:1.0,+(current+.08).toFixed(2)));
+      }else if(fastIntervals>=4 && current<(mobile?.78:Math.min(devicePixelRatio,1.35))){
+        renderer.setPixelRatio(Math.min(mobile?.78:Math.min(devicePixelRatio,1.35),+(current+.08).toFixed(2)));
         renderer.setSize(innerWidth,innerHeight);fastIntervals=0;
       }
     }
     window.__KUSELWIES_DIAGNOSTICS={fps:frameRate,pixelRatio:renderer.getPixelRatio(),
-      buildings:buildings.length,npcs:cityNPCs.length,map:'Kuselwies-Testkarte'};
+      buildings:buildings.length,npcs:cityNPCs.length,map:'Kuselwies HD · V13'};
   }
 }
 updateObjective();hero.root.position.copy(playerPos);requestAnimationFrame(frame);
