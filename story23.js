@@ -6,9 +6,13 @@ const CH1='neon-rift-echoes-v1', CH45='neon-rift-echoes-ch45-v1';
 function stored(key){try{return JSON.parse(localStorage.getItem(key)||'{}')||{}}catch{return {}}}
 let progress=Object.assign({completed2:false,completed3:false,chapter:0,flags2:{},flags3:{},position2:null,position3:null},stored(KEY));
 function save(){try{localStorage.setItem(KEY,JSON.stringify(progress))}catch{}}
-const chapter1Complete=()=>!!stored(CH1).state?.complete;
+const chapter1Complete=()=>!!stored(CH1).state?.complete||!!progress.completed1;
 const later=()=>stored(CH45);
-function nextChapter(){const l=later();return l.completed5?6:l.unlocked5?5:progress.completed3?4:progress.completed2?3:chapter1Complete()?2:1}
+// Only a completed predecessor unlocks a new chapter. Preserve all existing save keys.
+function completed(which){const l=later();return which===1?chapter1Complete():which===2?!!progress.completed2:which===3?!!progress.completed3:which===4?!!l.unlocked5:which===5?!!l.completed5:false}
+function canAccess(which){if(which===1)return true;if(which===6)return completed(5);return which>=2&&which<=5&&(completed(which)||completed(which-1))}
+function nextChapter(){for(let n=1;n<=5;n++)if(!completed(n))return n;return 6}
+function showLocked(which){const missing=which===6?5:which-1;message('Kapitel '+which+' ist noch gesperrt. Schließe zuerst Kapitel '+missing+' ab.')}
 const style=document.createElement('style');style.textContent=`
 #story23{position:fixed;inset:0;z-index:55;display:none;background:#08121e;overflow:hidden;touch-action:none;color:#eaf6fa;font-family:system-ui,-apple-system,sans-serif}
 #s23canvas{width:100%;height:100%;display:block}
@@ -203,7 +207,9 @@ return !flags.card?'Finde den Sicherheitsausweis im Materiallager.':!flags.archi
 function nearest(){let best=null,d=Infinity;for(const n of scene.nodes){const r=Math.hypot(n.x-player.x,n.y-player.y);if(r<83&&r<d){best=n;d=r}}return best}
 function interact(){if(!active)return;if(dialogOpen)return;const n=nearest();if(n)n.cb();else message('Kein Gegenstand in Reichweite. Suche die leuchtenden Markierungen.')}
 function journal(){if(!active)return;show(`JOURNAL · KAPITEL ${chapter}`,[objective(), chapter===2?'Aktiviere Relais und funke den Notruf. Energieschüsse (F / linke Maustaste / ENERGIE) stoppen Drohnen. Nach der Aufnahme beginnt die Flucht.':'Wächter und Drohnen lassen sich mit Energieimpulsen kurzzeitig außer Gefecht setzen. Fliehe mit dem Archivbeweis zum Portal.',`Fortschritt: Kapitel 2 ${progress.completed2?'abgeschlossen':'offen'} · Kapitel 3 ${progress.completed3?'abgeschlossen':'offen'}.`],[['Weiter erkunden',hide],['Zur Station',close]])}
-function start(which){if(which!==2&&which!==3)return false;close();chapter=which;flags={...(progress['flags'+which]||{})};if(chapter===2)chapterTwo();else chapterThree();resetAction();active=true;progress.chapter=chapter;save();paused=true;root.style.display='block';resize();refreshHUD();last=performance.now();
+function start(which,replay=false){if(which!==2&&which!==3)return false;if(!canAccess(which)){showLocked(which);return false}close();
+if(replay){progress['flags'+which]={};progress['position'+which]=null;save()}
+chapter=which;flags={...(progress['flags'+which]||{})};if(chapter===2)chapterTwo();else chapterThree();resetAction();active=true;progress.chapter=chapter;save();paused=true;root.style.display='block';resize();refreshHUD();last=performance.now();
 show(chapter===2?'KAPITEL 2 · DER LETZTE FUNKSPRUCH':'KAPITEL 3 · SEKTOR NULL',chapter===2?[
 'Die Station AURORA zittert unter einem tiefen Dröhnen. Im verlassenen Transitknoten blinkt eine einzige Lampe.',
 'Ein älterer Techniker winkt dir zu. Hinter ihm sind die Zugänge zu drei Relais ausgefallen.',
@@ -213,17 +219,51 @@ show(chapter===2?'KAPITEL 2 · DER LETZTE FUNKSPRUCH':'KAPITEL 3 · SEKTOR NULL'
 'Sammle den Ausweis, sichere ECHO-00, halte die Wächter mit Energieimpulsen auf und entkomme dem Schatten durch das Portal.'
 ],[['Weiter',hide],['Zur Station',close]]);raf=requestAnimationFrame(loop);refreshNav();return true}
 function close(){if(!active)return;setSavePosition();active=false;paused=true;root.style.display='none';modal.style.display='none';keys.clear();joy.x=joy.y=0;cancelAnimationFrame(raf);refreshNav()}
-function go4(){if(window.NEON_CHAPTERS?.start4)window.NEON_CHAPTERS.start4();else message('Kapitel 4 wird nicht geladen. Bitte chapters.js prüfen.')}
-function go5(){if(window.NEON_CHAPTERS?.start5)window.NEON_CHAPTERS.start5()}
-function enterNext(){const n=nextChapter();if(n===1){if($('start').style.display!=='none')$('play').click();else{window.scrollTo?.(0,0)}}else if(n===2||n===3)start(n);else if(n===4)go4();else if(n===5)go5();else if(n===6&&window.NEON_CITY)window.NEON_CITY.start()}
-function refreshNav(){const next=nextChapter(),labels={1:'Kapitel 1 · AURORA',2:'Kapitel 2 · Funkspruch',3:'Kapitel 3 · Sektor Null',4:'Kapitel 4 · Der Riss',5:'Kapitel 5 · Wahrheit',6:'VESPER 3D · 30 Jahre zuvor'};
-if($('storyContinue')){$('storyContinue').style.display=next>1?'inline-block':'none';$('storyContinue').textContent='Fortsetzen → '+labels[next]}
-if($('storyNext'))$('storyNext').textContent=next===1?'Kapitel 1 spielen':'Fortsetzen: Kapitel '+(next===6?'VESPER':next);
-if($('storyReplay'))$('storyReplay').style.display=chapter1Complete()?'inline-block':'none';
+function go4(){if(!canAccess(4)){showLocked(4);return}if(window.NEON_CHAPTERS?.start4)window.NEON_CHAPTERS.start4();else message('Kapitel 4 wird nicht geladen. Bitte chapters.js prüfen.')}
+function go5(){if(!canAccess(5)){showLocked(5);return}if(window.NEON_CHAPTERS?.start5)window.NEON_CHAPTERS.start5()}
+function enterNext(){const n=nextChapter();if(n===1){if($('start').style.display!=='none')$('play').click();else{window.scrollTo?.(0,0)}}else if(n===2||n===3)start(n);else if(n===4)go4();else if(n===5)go5();else if(n===6&&canAccess(6)&&window.NEON_CITY)window.NEON_CITY.start()}
+function refreshNav(){
+ const next=nextChapter(),labels={1:'Kapitel 1 · AURORA',2:'Kapitel 2 · Funkspruch',3:'Kapitel 3 · Sektor Null',4:'Kapitel 4 · Der Riss',5:'Kapitel 5 · Wahrheit',6:'VESPER 3D · 30 Jahre zuvor'};
+ if($('storyContinue')){$('storyContinue').style.display=next>1?'inline-block':'none';$('storyContinue').textContent='Fortsetzen → '+labels[next]}
+
+ renderChapterMenu();
 }
-const launcher=$('chapterLauncher');if(launcher)launcher.style.display='none';const nav=document.createElement('div');nav.id='storyNav';nav.innerHTML='<button id="storyNext">Kapitel 1 spielen</button><button id="storyReplay" style="display:none">Kapitel 1 erneut</button><button id="storyAction2">Kapitel 2 · Action</button><button id="storyAction3">Kapitel 3 · Action</button>'; document.body.append(nav);
-$('storyAction2').onclick=()=>{progress.position2=null;progress.flags2={};start(2)};$('storyAction3').onclick=()=>{progress.position3=null;progress.flags3={};start(3)};$('storyNext').onclick=enterNext;$('storyReplay').onclick=()=>{if($('start').style.display!=='none')$('play').click();else message('Du befindest dich in der Station. Suche den Kern, um Kapitel 1 erneut anzusehen.')};
-const button=document.createElement('button');button.id='storyContinue';button.textContent='Fortsetzen';$('start').append(button);button.onclick=enterNext;
+// Old always-visible chapter buttons are intentionally removed; three-dot menu is the only chapter chooser.
+const launcher=$('chapterLauncher');if(launcher)launcher.style.display='none';
+const menuToggle=$('chapterMenuToggle'),menu=$('chapterMenuPanel'),shade=$('chapterMenuBackdrop'),chapterList=$('chapterMenuList');
+let menuOpen=false;
+function setChapterMenu(open){menuOpen=!!open;window.NEON_UI_MENU_OPEN=menuOpen;
+ menu.hidden=!menuOpen;shade.hidden=!menuOpen;
+ menuToggle.setAttribute('aria-expanded',String(menuOpen));
+ menuToggle.setAttribute('aria-label',menuOpen?'Kapitelübersicht schließen':'Kapitelübersicht öffnen');
+ if(menuOpen)renderChapterMenu();
+}
+const chapterNames=['','Station AURORA','Der letzte Funkspruch','Sektor Null','Der Riss','Die letzte Wahrheit','VESPER 3D · 30 Jahre zuvor'];
+function launch(which){if(!canAccess(which)){showLocked(which);return}setChapterMenu(false);
+ // Never leave an earlier chapter running invisibly underneath the selected one.
+ if(window.NEON_STORY?.active)window.NEON_STORY.close();
+ if(window.NEON_CHAPTERS?.active)window.NEON_CHAPTERS.exit();
+ if(which===1){if(chapter1Complete()){
+    progress.completed1=true;save();window.NEON_GAME?.replayOne();
+  }else if($('start').style.display!=='none')$('play').click();
+  else message('Kapitel 1 läuft bereits. Erkunde die Station und suche den Kern.');
+ }else if(which===2||which===3)start(which,completed(which));
+ else if(which===4)go4();else if(which===5)go5();
+ else if(which===6&&window.NEON_CITY)window.NEON_CITY.start();
+}
+function renderChapterMenu(){chapterList.replaceChildren();const doneCount=[1,2,3,4,5].filter(completed).length;
+ $('chapterMenuProgress').textContent=doneCount+'/5 Kapitel abgeschlossen · Neue Kapitel werden der Reihe nach freigeschaltet.';
+ for(let n=1;n<=6;n++){const allowed=canAccess(n),done=completed(n),btn=document.createElement('button');
+  btn.type='button';btn.disabled=!allowed;btn.className=done?'done':allowed?'available':'locked';
+  const title=document.createElement('span');title.textContent=(n===6?'':'Kapitel '+n+' · ')+chapterNames[n];
+  const status=document.createElement('span');status.className='chapterState';status.textContent=done?'✓ Fertig':allowed?(n===6?'Starten':'Spielen'):'🔒 Gesperrt';
+  btn.append(title,status);btn.onclick=()=>launch(n);chapterList.append(btn);
+ }
+}
+menuToggle.addEventListener('click',()=>setChapterMenu(!menuOpen));
+$('chapterMenuClose').addEventListener('click',()=>setChapterMenu(false));shade.addEventListener('click',()=>setChapterMenu(false));
+window.addEventListener('keydown',e=>{if(menuOpen&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();setChapterMenu(false)}},true);
+const button=document.createElement('button');button.id='storyContinue';button.textContent='Fortsetzen';$('start').append(button);button.onclick=()=>{setChapterMenu(false);enterNext()};
 function refreshHUD(){$('s23name').textContent=scene.title;$('s23objective').textContent=objective();$('s23health').textContent='Schutzenergie: '+('♥ '.repeat(Math.max(0,player.hearts)))+'  ·  Drohnen: '+actionKills+'  ·  F / MAUS / ENERGIE: Energieschuss'+(alarmPhase?'  ·  FLIEH!':'');}
 function step(dt){seconds+=dt;player.invulnerable=Math.max(0,player.invulnerable-dt);let vx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0)+joy.x;let vy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0)+joy.y;const len=Math.hypot(vx,vy);if(len>.07){vx/=Math.max(1,len);vy/=Math.max(1,len);const speed=player.speed*(alarmPhase?1.2:1)*dt;if(!blocked(player.x+vx*speed,player.y))player.x+=vx*speed;if(!blocked(player.x,player.y+vy*speed))player.y+=vy*speed}
 if(chapter===3){for(const guard of guards){guard.stun=Math.max(0,(guard.stun||0)-dt);if(guard.stun>0)continue;guard.t+=dt*1.1;const n=(Math.sin(guard.t)+1)/2;if(guard.axis==='x'){guard.x=guard.from+(guard.to-guard.from)*n;guard.y=guard.y??0}else{guard.y=guard.from+(guard.to-guard.from)*n;guard.x=guard.x??0}
@@ -238,10 +278,10 @@ ctx.globalAlpha=done?.45:1;ctx.fillStyle=n.color+'32';ctx.beginPath();ctx.arc(n.
 if(chapter===3){for(const guard of guards){const silent=seconds<(Number(flags.silence)||0)||guard.stun>0;ctx.fillStyle=silent?'#6f928f55':'#e7588c2e';ctx.beginPath();ctx.arc(guard.x,guard.y,125,0,7);ctx.fill();ctx.fillStyle=silent?'#688f8b':'#ef6b9d';ctx.fillRect(guard.x-16,guard.y-16,32,32);ctx.fillStyle='#182639';ctx.fillRect(guard.x-9,guard.y-5,18,9)}}
 drawAction();if(!player.invulnerable||Math.floor(seconds*9)%2){ctx.fillStyle='#051523';ctx.beginPath();ctx.arc(player.x,player.y+4,19,0,7);ctx.fill();ctx.fillStyle='#91f2d9';ctx.fillRect(player.x-10,player.y-10,20,20);ctx.fillStyle='#133c4a';ctx.fillRect(player.x-7,player.y-7,14,7);ctx.strokeStyle='#dff5c0';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(player.x,player.y);ctx.lineTo(player.x+aimX*21,player.y+aimY*21);ctx.stroke()}ctx.restore();if(screenFlash>0){ctx.fillStyle='rgba(251,57,88,'+(screenFlash*.45)+')';ctx.fillRect(0,0,viewW,viewH)}const near=nearest();hint.style.display=near&&!dialogOpen?'block':'none';if(near)hint.textContent='E / AKTION · '+near.label;
 if(seconds<toastUntil){ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillStyle='#9cf5df';ctx.fillText(toast,viewW/2,83)}refreshHUD()}
-function loop(now){if(!active)return;const dt=Math.min(.04,Math.max(0,(now-last)/1000));last=now;if(!paused)step(dt);render();raf=requestAnimationFrame(loop)}
-window.addEventListener('keydown',e=>{if(!active)return;const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright','e',' ','f','w','a','s','d'].includes(k))e.preventDefault();keys.add(k);if(!e.repeat&&(k==='e'||k===' '))interact();if(k==='f')firePulse();if(!e.repeat&&k==='j')journal()});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>keys.clear());window.addEventListener('resize',()=>{if(active)resize()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)setSavePosition()});
+function loop(now){if(!active)return;const dt=Math.min(.04,Math.max(0,(now-last)/1000));last=now;if(!paused&&!window.NEON_UI_MENU_OPEN)step(dt);render();raf=requestAnimationFrame(loop)}
+window.addEventListener('keydown',e=>{if(!active||window.NEON_UI_MENU_OPEN)return;const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright','e',' ','f','w','a','s','d'].includes(k))e.preventDefault();keys.add(k);if(!e.repeat&&(k==='e'||k===' '))interact();if(k==='f')firePulse();if(!e.repeat&&k==='j')journal()});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>keys.clear());window.addEventListener('resize',()=>{if(active)resize()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)setSavePosition()});
 $('s23exit').onclick=close;$('s23journal').onclick=journal;$('s23act').addEventListener('pointerdown',e=>{e.preventDefault();interact()});const shootButton=$('s23shoot');shootButton.addEventListener('pointerdown',e=>{e.preventDefault();fireHeld=true;firePulse();shootButton.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])shootButton.addEventListener(ev,()=>fireHeld=false);canvas.addEventListener('pointerdown',e=>{if(!active||dialogOpen||e.pointerType==='touch')return;const rect=canvas.getBoundingClientRect(),c=cam();firePulse(e.clientX-rect.left+c.x,e.clientY-rect.top+c.y)});
 const stick=$('s23stick'),nub=$('s23nub');function move(e){const r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,max=r.width*.32,k=Math.min(1,max/(Math.hypot(dx,dy)||1));joy.x=dx*k/max;joy.y=dy*k/max;nub.style.transform=`translate(${dx*k}px,${dy*k}px)`}
 stick.addEventListener('pointerdown',e=>{e.preventDefault();joy.id=e.pointerId;stick.setPointerCapture(e.pointerId);move(e)});stick.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)move(e)});for(const evt of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(evt,e=>{if(joy.id===e.pointerId){joy.id=null;joy.x=joy.y=0;nub.style.transform='translate(0,0)'}});
-window.NEON_STORY={start,close,refresh:refreshNav,continue:enterNext,get active(){return active},get next(){return nextChapter()},get progress(){return {...progress}}};refreshNav();
+window.NEON_STORY={start,close,refresh:refreshNav,continue:enterNext,canAccess,completed,showLocked,launch,get active(){return active},get next(){return nextChapter()},get progress(){return {...progress}}};refreshNav();
 })();
