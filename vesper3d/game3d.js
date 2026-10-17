@@ -303,8 +303,8 @@ npc('Benni',-20,-61,0x4d718c,'benni');
 // Weitere Verwandte der großen Familie: eigene Arbeit, eigene Dialoge.
 npc('Annika',-92,-11,0xb27991,'annika'); // Floristin, bei Café Luna
 npc('Tobi',17,-61,0x7488ae,'tobi'); // Paketbote, beim Park
-// Leo taucht erst nach der Hauptgeschichte auf: sein Verschwinden bleibt ein Rätsel.
-npc('Leo',-72,40,0x567d9f,'leo','report');
+// Leon taucht erst nach der Hauptgeschichte auf: sein Verschwinden bleibt ein Rätsel.
+npc('Leon',-72,40,0x567d9f,'leo','report');
 // Messkasten steht außerhalb von Häusern an der Parkkante.
 block(world,1.1,2.05,.78,-26,1.025,-62,M.lamp);
 block(world,.72,.6,.10,-26,1.55,-61.56,M.skyWindow);
@@ -527,7 +527,7 @@ function updateObjective(){
   let objective;
   if(!save.foundPhone) objective='Stefans Morgen · Sieh dir deinen Kommunikator an.';
   else if(!save.metMara) objective='Melanie wartet im Wohnviertel. Finde sie oder erkunde erst die Stadt.';
-  else if(!save.tape) objective='Melanies Mann Leo · Suche das Tonbandgerät im Radio Vega.';
+  else if(!save.tape) objective='Melanies Mann Leon · Suche das Tonbandgerät im Radio Vega.';
   else if(!save.metNora) objective='Eine Nummer fehlt · Vielleicht kennt Agnes im Archiv den Code.';
   else if(!save.decoded) objective='91.7 · Kehre zum Radio zurück und entschlüssele das Signal.';
   else if(!save.metVale) objective='AURORA · Sprich mit Dr. Patrick vor dem Forschungsgebäude.';
@@ -568,19 +568,19 @@ function eventCard(top,heading,caption,after){
 }
 function speak(role){
   if(role==='mara'){
-    if(save.metLeo){sceneText('MELANIE','Leo ist wieder da', '„Stefan … du hast ihn wirklich gefunden?“ Melanie ringt nach Worten. „Ich weiß nicht, was am Bahnhof passiert ist. Aber heute Abend sitzen wir alle zusammen. Als Familie.“',[{label:'Wir passen aufeinander auf.'}]);return;}
+    if(save.metLeo){sceneText('MELANIE','Leon ist wieder da', '„Stefan … du hast ihn wirklich gefunden?“ Melanie ringt nach Worten. „Ich weiß nicht, was am Bahnhof passiert ist. Aber heute Abend sitzen wir alle zusammen. Als Familie.“',[{label:'Wir passen aufeinander auf.'}]);return;}
     if(!save.metMara){
       sceneText('MELANIE · WOHNVIERTEL','Drei Anrufe',
-        'Melanie sieht sich um, bevor sie spricht. Ihre Jacke ist noch vom Regen nass.\n\n„Mein Mann Leo ist seit Dienstag weg. Er arbeitete beim Radiosender. Gestern kam eine Kassette ohne Absender in meinen Briefkasten. Ich konnte nur fünf Sekunden hören, dann war sie leer.“\n\nAuf die Frage nach der Polizei schüttelt sie den Kopf. „Die haben mir gesagt, Leo hätte nie bei Radio Vega gearbeitet.“',[
-        {label:'Wir suchen gemeinsam nach ihm.',run:()=>{save.metMara=true;save.answer='help';sceneText('MELANIE','Eine Vereinbarung','„Stefan, wir sind Familie. Wenn du etwas findest, bring es zuerst zu mir. Versprich mir, dass du nicht allein nach Leo suchst.“', [{label:'Versprochen.'}])}},
-        {label:'Was, wenn Leo freiwillig weg ist?',secondary:true,run:()=>{save.metMara=true;save.answer='doubt';sceneText('MELANIE','Vielleicht','„Vielleicht. Aber warum hat mein Mann seine Schlüssel, sein Telefon und sogar seine Schuhe hiergelassen?“', [{label:'Ich sehe mich beim Radio um.'}])}},
+        'Melanie sieht sich um, bevor sie spricht. Ihre Jacke ist noch vom Regen nass.\n\n„Mein Mann Leon ist seit Dienstag weg. Er arbeitete beim Radiosender. Gestern kam eine Kassette ohne Absender in meinen Briefkasten. Ich konnte nur fünf Sekunden hören, dann war sie leer.“\n\nAuf die Frage nach der Polizei schüttelt sie den Kopf. „Die haben mir gesagt, Leon hätte nie bei Radio Vega gearbeitet.“',[
+        {label:'Wir suchen gemeinsam nach ihm.',run:()=>{save.metMara=true;save.answer='help';sceneText('MELANIE','Eine Vereinbarung','„Stefan, wir sind Familie. Wenn du etwas findest, bring es zuerst zu mir. Versprich mir, dass du nicht allein nach Leon suchst.“', [{label:'Versprochen.'}])}},
+        {label:'Was, wenn Leon freiwillig weg ist?',secondary:true,run:()=>{save.metMara=true;save.answer='doubt';sceneText('MELANIE','Vielleicht','„Vielleicht. Aber warum hat mein Mann seine Schlüssel, sein Telefon und sogar seine Schuhe hiergelassen?“', [{label:'Ich sehe mich beim Radio um.'}])}},
         {label:'Später. Ich muss erst nachdenken.',secondary:true}
       ]);
     }else sceneText('MELANIE','Bitte gib nicht auf',
-      save.decoded?'„Du hast es gehört, nicht wahr? Diese Stimme … sie klingt wie Leo. Aber der Sender wurde vor zwei Tagen abgeschaltet.“':'„Wenn du zu Radio Vega gehst: Leo versteckte Dinge immer dort, wo niemand freiwillig aufräumt.“',[
+      save.decoded?'„Du hast es gehört, nicht wahr? Diese Stimme … sie klingt wie Leon. Aber der Sender wurde vor zwei Tagen abgeschaltet.“':'„Wenn du zu Radio Vega gehst: Leon versteckte Dinge immer dort, wo niemand freiwillig aufräumt.“',[
         {label:'Ich bleibe dran.'},
         {label:'Was weißt du über AURORA?',run:()=>sceneText('MELANIE','Das Gebäude am Rand',
-          '„Dort bekommt jeder einen guten Lohn und niemand darf darüber reden, woran er arbeitet. Leo sagte immer, das sei der freundlichste Ort in Baumholder. Er machte dabei nie ein freundliches Gesicht.“', [{label:'Danke.'}])}
+          '„Dort bekommt jeder einen guten Lohn und niemand darf darüber reden, woran er arbeitet. Leon sagte immer, das sei der freundlichste Ort in Baumholder. Er machte dabei nie ein freundliches Gesicht.“', [{label:'Danke.'}])}
       ]);
   }else if(role==='tarek'){
     if(!save.metTarek)sceneText('NICO · MARKTPLATZ','Die Stadt hat Ohren',
@@ -594,9 +594,9 @@ function speak(role){
     if(!save.metNora)sceneText('AGNES · ARCHIV','Eine fehlende Seite',
       'Agnes legt ihre Jacke über einen Stuhl. „Rudi hat heute Früh am Bahnhof wieder etwas Seltsames gesehen. Seit wir verheiratet sind, kann ich an seiner Stimme hören, wann er sich Sorgen macht.“
 
-Dann führt sie dich zum Fenster und legt eine Karte der alten Stadt aus. „Ich habe Leo geholfen, die Senderprotokolle zu archivieren. Dann löschte jemand sein ganzes Personalregister.“\n\nSie faltet die Karte und zeigt auf eine handschriftliche Notiz: 2 – 7 – 1.',[
+Dann führt sie dich zum Fenster und legt eine Karte der alten Stadt aus. „Ich habe Leon geholfen, die Senderprotokolle zu archivieren. Dann löschte jemand sein ganzes Personalregister.“\n\nSie faltet die Karte und zeigt auf eine handschriftliche Notiz: 2 – 7 – 1.',[
         {label:'Warum diese drei Zahlen?',run:()=>{save.metNora=true;sceneText('AGNES','Das Passwort',
-          '„Leo sagte, falls wir jemals getrennt würden, sei das die Reihenfolge. Ich hielt es für einen Witz. Jetzt fürchte ich, es war ein Abschied.“', [{label:'Ich probiere es aus.'}])}},
+          '„Leon sagte, falls wir jemals getrennt würden, sei das die Reihenfolge. Ich hielt es für einen Witz. Jetzt fürchte ich, es war ein Abschied.“', [{label:'Ich probiere es aus.'}])}},
         {label:'Darf ich die Zahlen behalten?',run:()=>{save.metNora=true;flash('Notiert: 2 – 7 – 1')}}
       ]);
     else sceneText('AGNES','Verdeckte Baupläne',
@@ -679,16 +679,16 @@ Dann führt sie dich zum Fenster und legt eine Karte der alten Stadt aus. „Ich
     }else sceneText('TOBI','Keine weiteren Pakete',
       '„Seit heute Mittag zeigt mein Scanner keine neuen Zustellungen an. Aber ich höre nachts immer noch diesen Zug.“',[{label:'Pass auf dich auf.'}]);
   }else if(role==='leo'){
-    sceneText('LEO · BAHNHOF','Du bist doch verschwunden!',
-      'Leo steht auf dem Bahnsteig, als wäre nichts passiert. Seine Jacke trägt das Logo von Radio Vega. „Stefan?“, fragt er leise. „Sag Melanie bitte, dass ich wieder da bin.“\n\nEr schaut an dir vorbei, zur unterirdischen Treppe. „Ich weiß nicht, welchen Tag wir haben. Für mich waren es nur ein paar Minuten.“',[
-        {label:'Melanie wartet auf dich.',run:()=>{save.metLeo=true;flash('Leo ist zurück · Sprich mit Melanie.')}},
-        {label:'Was ist unter dem Bahnhof?',run:()=>{save.metLeo=true;sceneText('LEO','Kein Licht am Ende','„Da unten haben die Uhren aufgehört zu laufen. Mehr weiß ich nicht. Vielleicht ist es besser so.“',[{label:'Ich werde nachforschen.'}])}}
+    sceneText('LEON · BAHNHOF','Du bist doch verschwunden!',
+      'Leon steht auf dem Bahnsteig, als wäre nichts passiert. Seine Jacke trägt das Logo von Radio Vega. „Stefan?“, fragt er leise. „Sag Melanie bitte, dass ich wieder da bin.“\n\nEr schaut an dir vorbei, zur unterirdischen Treppe. „Ich weiß nicht, welchen Tag wir haben. Für mich waren es nur ein paar Minuten.“',[
+        {label:'Melanie wartet auf dich.',run:()=>{save.metLeo=true;flash('Leon ist zurück · Sprich mit Melanie.')}},
+        {label:'Was ist unter dem Bahnhof?',run:()=>{save.metLeo=true;sceneText('LEON','Kein Licht am Ende','„Da unten haben die Uhren aufgehört zu laufen. Mehr weiß ich nicht. Vielleicht ist es besser so.“',[{label:'Ich werde nachforschen.'}])}}
       ]);
   }else if(role==='jun'){
     sceneText('ALVIN · CAFÉ LUNA','Ein seltsamer Gast',
       '„Annika hilft heute bei der Floristin aus. Ich wollte sie eigentlich fragen, ob wir unser Leben gemeinsam planen wollen“, sagt Alvin und lächelt verlegen. „Den richtigen Moment für die Verlobung suche ich noch.“
 
-„Leo? Klar kenne ich ihn. Er trank jeden Donnerstag Tee, obwohl er Tee hasste. Letzte Woche hat er plötzlich das Glas abgestellt und gesagt: ,Ich glaube, wir sind schon einmal hier gewesen.‘“',[
+„Leon? Klar kenne ich ihn. Er trank jeden Donnerstag Tee, obwohl er Tee hasste. Letzte Woche hat er plötzlich das Glas abgestellt und gesagt: ,Ich glaube, wir sind schon einmal hier gewesen.‘“',[
         {label:'Hat er noch etwas gesagt?',run:()=>{save.metJun=true;sceneText('ALVIN','Eine Erinnerung','„Er hat nach einer alten Fotografie gefragt. Angeblich hing sie mal an der Wand der Markthalle. Ich habe ihm gesagt, dass das Gebäude erst zwölf Jahre alt ist.“',[{label:'Seltsam.'}])}},
         {label:'Danke.',run:()=>{save.metJun=true}}
       ]);
@@ -714,14 +714,14 @@ function inspect(role){
 
     case 'homePhone':
       sceneText('DEINE WOHNUNG','Drei verpasste Anrufe',
-        '07:14 Uhr. Auf dem Display erscheint eine Nachricht von Melanie: „Bitte komm allein. Ich glaube, Leo steckt in Schwierigkeiten.“\n\nDaneben: eine alte Erinnerung an einen gemeinsamen Ausflug. Vier Personen vor einem riesigen Bahnhof. Du erkennst Melanie, Leo – und dich selbst, Stefan. Die vierte Person wurde aus dem Foto gekratzt.',[
+        '07:14 Uhr. Auf dem Display erscheint eine Nachricht von Melanie: „Bitte komm allein. Ich glaube, Leon steckt in Schwierigkeiten.“\n\nDaneben: eine alte Erinnerung an einen gemeinsamen Ausflug. Vier Personen vor einem riesigen Bahnhof. Du erkennst Melanie, Leon – und dich selbst, Stefan. Die vierte Person wurde aus dem Foto gekratzt.',[
           {label:'Nachricht beantworten',run:()=>{save.foundPhone=true;flash('Hauptgeschichte begonnen · Finde Melanie im Wohnviertel')}},
           {label:'Foto genauer ansehen',run:()=>{save.foundPhone=true;save.photo=true;sceneText('DEINE WOHNUNG','Die vierte Person',
             'Jemand hat das Gesicht so gründlich entfernt, dass sogar das Papier eingerissen ist. Auf der Rückseite steht in deiner eigenen Handschrift: „Erinner mich daran, wenn wir uns wiedersehen.“', [{label:'Einstecken.'}])}}
         ]);break;
     case 'tape':
       if(!save.metMara){
-        sceneText('RADIO VEGA','Ein leerer Arbeitsplatz','Auf einem Schreibtisch steht ein altes Tonbandgerät. Der rechte Lautsprecher ist ausgebaut. Auf dem Tisch klebt ein Etikett: LEO.',[{label:'Ich schaue mich später noch einmal um.'}]);
+        sceneText('RADIO VEGA','Ein leerer Arbeitsplatz','Auf einem Schreibtisch steht ein altes Tonbandgerät. Der rechte Lautsprecher ist ausgebaut. Auf dem Tisch klebt ein Etikett: LEON.',[{label:'Ich schaue mich später noch einmal um.'}]);
       }else{
         sceneText('RADIO VEGA','Sechs Sekunden',
           'Du drückst die Wiedergabetaste. Erst rauscht es. Dann hörst du ein Klopfen, drei Atemzüge und Leos Stimme: „Agnes hat die Zahlen. Sucht nicht nach mir. Sucht nach dem, was ich gehört habe.“\n\nDas Band stoppt. Obwohl du nichts angefasst hast, beginnt es rückwärts zu laufen.',[
@@ -799,9 +799,9 @@ function scanInteractions(){
 // ── Journal ───────────────────────────────────────────────────────────
 function journal(){
   const quests=[
-    ['Familie in Baumholder','Stefan (du), Agnes & Rudi (verheiratet), Melanie & Leo (verheiratet), Alvin & Annika (noch nicht verlobt), Benni, Tobi, Nico und Patrick. Jeder hat seinen eigenen Alltag.'],
+    ['Familie in Baumholder','Stefan (du), Agnes & Rudi (verheiratet), Melanie & Leon (verheiratet), Alvin & Annika (noch nicht verlobt), Benni, Tobi, Nico und Patrick. Jeder hat seinen eigenen Alltag.'],
     ['Hauptgeschichte',save.report?'Kapitel 6 abgeschlossen. Die Stadt bleibt zugänglich.':$('goal').textContent],
-    ['Melanies Mann Leo ist verschwunden',save.metMara?'Melanie sucht ihren Mann Leo.':'Melanie will dringend mit dir sprechen.'],
+    ['Melanies Mann Leon ist verschwunden',save.metMara?'Melanie sucht ihren Mann Leon.':'Melanie will dringend mit dir sprechen.'],
     ['Die Frequenz 91.7',save.decoded?'Die Meldung von Station Null wurde entschlüsselt.':save.tape?'Tonband gefunden. Ein dreistelliger Code fehlt.':'Suche nach Hinweisen bei Radio Vega.'],
     ['Die verschwundenen Gleise',save.plans?'Unter AURORA gab es einst einen Bahnhof.':save.metNora?'Agnes erwähnt verdeckte Baupläne.':'Im Archiv könntest du alte Pläne finden.'],
     ['Der Zug um 03:17',save.ticket?'Ein ungewöhnliches Ticket wurde gefunden.':save.station?'Ein Zug fährt jede Nacht, obwohl er nicht auf dem Plan steht.':'Sprich mit Rudi am Bahnhof.'],
