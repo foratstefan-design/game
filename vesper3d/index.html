@@ -47,19 +47,19 @@ body.mobile #controls{display:flex}body.mobile #hint{display:none}body.mobile #m
 </head>
 <body>
 <div id="hud">
-<div class="top"><div class="chip" id="objective"><small>BAUMHOLDER · 3D EDITION 5 · 30 JAHRE ZUVOR</small><span id="goal">Ein ganz normaler Morgen</span></div><div class="topButtons"><a class="smallBtn" href="../" title="Zurück zum Prolog">↩ Prolog</a><button class="smallBtn" id="menuBtn">☰ Journal</button></div></div>
+<div class="top"><div class="chip" id="objective"><small>BAUMHOLDER · 3D EDITION 5 · FIX 10.1 · 30 JAHRE ZUVOR</small><span id="goal">Ein ganz normaler Morgen</span></div><div class="topButtons"><a class="smallBtn" href="../" title="Zurück zum Prolog">↩ Prolog</a><button class="smallBtn" id="menuBtn">☰ Journal</button></div></div>
 <canvas id="minimap" width="256" height="256" aria-label="Stadtkarte"></canvas>
 <div id="prompt"></div><div id="toast" role="status" aria-live="polite"></div>
 <div id="hint">WASD · Maus ziehen: Kamera · E: Sprechen / Türen öffnen · Shift: Rennen · Leertaste: Springen</div>
 <div id="controls"><div id="stick" class="touch"><div id="nub"></div></div><div id="touchActions"><button id="act">AKTION</button><button id="jump">SPRUNG</button><button id="run">RENNEN</button></div></div>
 <div id="performance"></div>
-<div id="intro" class="overlay"><div class="panel"><div class="eyebrow">NEON RIFT · ECHOES</div><h1>30 JAHRE ZUVOR</h1><p>07:14 Uhr. Ein vorbeifahrender Zug lässt die Scheiben deiner Wohnung leise klirren. Auf dem Tisch steht kalter Kaffee. Jemand hat gestern Abend dreimal angerufen.</p><p>Du bist Stefan. Die meisten deiner Verwandten wohnen ebenfalls in Baumholder. Du hast heute frei. Zumindest war das der Plan.</p><div class="buttonRow"><button id="start">Aufstehen</button></div><p style="font-size:12px;color:#8eb7c5">3D-Edition 5 · Empfohlen: iPhone quer halten · Three.js lädt beim ersten Besuch aus dem Internet.</p></div></div>
+<div id="intro" class="overlay"><div class="panel"><div class="eyebrow">NEON RIFT · ECHOES</div><h1>30 JAHRE ZUVOR</h1><p>07:14 Uhr. Ein vorbeifahrender Zug lässt die Scheiben deiner Wohnung leise klirren. Auf dem Tisch steht kalter Kaffee. Jemand hat gestern Abend dreimal angerufen.</p><p>Du bist Stefan. Die meisten deiner Verwandten wohnen ebenfalls in Baumholder. Du hast heute frei. Zumindest war das der Plan.</p><div class="buttonRow"><button id="start">Aufstehen</button></div><p style="font-size:12px;color:#8eb7c5">3D-Edition 5 · Fix 10.1 · Empfohlen: iPhone quer halten · Three.js lädt beim ersten Besuch aus dem Internet.</p></div></div>
 <div id="dialogue" class="overlay" hidden><div class="panel"><div class="eyebrow" id="speaker"></div><h2 id="dialogTitle"></h2><p id="dialogueText"></p><div class="buttonRow" id="choices"></div></div></div>
 <div id="menu" class="overlay" hidden><div class="panel"><div class="eyebrow">BAUMHOLDER · JOURNAL</div><h2>Stefans erster Tag</h2><p>Deine große Familie hat ihr eigenes Leben, ihre Arbeit und ihre Geheimnisse.</p><div id="journalBody"></div><div class="buttonRow"><button id="closeMenu">Weiterspielen</button><button class="secondary" id="qualityBtn">Grafik: Auto</button><button class="secondary" id="resetSave">Spielstand zurücksetzen</button></div></div></div>
 <div id="storyCard"><small id="storyEyebrow">BAUMHOLDER</small><div class="time" id="storyTime">30 JAHRE ZUVOR</div><p id="storyCaption" style="color:#b8d6df;font-size:15px;max-width:540px;margin:0 auto"></p></div>
 </div>
 <script type="module">
-import('./game3d.js?v=9').catch(error => {
+import('./game3d.js?v=10.1').catch(error => {
   console.error('VESPER 3D',error);
   const box=document.createElement('div');box.style.cssText='position:fixed;inset:8%;z-index:999;background:#101e2c;color:white;display:grid;place-content:center;padding:25px;border:2px solid #f99;border-radius:15px;text-align:center';
   box.innerHTML='<h2>3D-Spiel konnte nicht geladen werden</h2><p>Prüfe, ob <code>game3d.js</code> im selben Ordner liegt, und lade die Seite bei bestehender Internetverbindung neu.</p>';
